@@ -1,10 +1,10 @@
-name: psssafeint-tests
+name: pssodin-tests
 on: [push]
 jobs:
   run-all-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: create build directory
         run: mkdir -p -v ${{github.workspace}}/build
         
@@ -14,7 +14,7 @@ jobs:
         env:
           CC:   gcc-10
           CXX:  g++-10
-        run: cmake ${{github.workspace}}/cevelop-workspace/PSSafeIntTests/
+        run: cmake ${{github.workspace}}/cevelop-workspace/PSSafeCheckedIntTests/
         
       - name: Build
         working-directory: ${{github.workspace}}/build
@@ -34,7 +34,7 @@ jobs:
         env:
           CC:   gcc-10
           CXX:  g++-10
-        run: cmake ${{github.workspace}}/cevelop-workspace/PSSafeIntTests/ -DCMAKE_BUILD_TYPE=Release
+        run: cmake ${{github.workspace}}/cevelop-workspace/PSSafeCheckedIntTests/ -DCMAKE_BUILD_TYPE=Release
         
       - name: Build ndebug
         working-directory: ${{github.workspace}}/build
@@ -54,7 +54,7 @@ jobs:
         env:
           CC:   gcc-10
           CXX:  g++-10
-        run: cmake ${{github.workspace}}/cevelop-workspace/PSSafeIntTests/ -DCMAKE_BUILD_TYPE=Throw
+        run: cmake ${{github.workspace}}/cevelop-workspace/PSSafeCheckedIntTests/ -DCMAKE_BUILD_TYPE=Throw
         
       - name: Build throw
         working-directory: ${{github.workspace}}/build
