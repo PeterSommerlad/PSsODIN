@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(PSSafeIntTests)
+project(PSSafeCheckedIntTests)
 
 
 set(CMAKE_CXX_STANDARD 20)
@@ -26,13 +26,13 @@ endif()
 
 file(GLOB SOURCES src/*.cpp)
 
-add_executable(PSSafeIntTests ${SOURCES} )
+add_executable(PSSafeCheckedIntTests ${SOURCES} )
 
-target_include_directories(PSSafeIntTests PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/cute)
+target_include_directories(PSSafeCheckedIntTests PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/cute)
 
 enable_testing()
 
-add_test(NAME test COMMAND PSSafeIntTests)
+add_test(NAME test COMMAND PSSafeCheckedIntTests)
 
 
 message("")
