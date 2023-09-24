@@ -6,3 +6,4 @@
 /clang-Debug/
 /clang-NDEBUG is set/
 /clang-PS_ASSERT_THROWS/
+*.xml
