@@ -8,6 +8,7 @@
 #include <cstddef>
 #include "OverflowCheckedTests.h"
 #include "psssafecheckedint.h"
+#include "NonBuiltInOverflowDetectionTests.h"
 
 
 
@@ -67,7 +68,7 @@ static_assert(42_ui32 == from_int(42u));
 
 
 
-static_assert(detail_::is_safeint_v<cui8>);
+static_assert(detail_::is_safeint_v<ui8>);
 static_assert(detail_::is_safeint_v<ui16>);
 static_assert(detail_::is_safeint_v<ui32>);
 static_assert(detail_::is_safeint_v<ui64>);
@@ -83,7 +84,7 @@ static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(1_ui8)+1)
 static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(2_ui16)+1)>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(1_si8))>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(2_si16))>);
-static_assert(std::is_same_v<uint8_t,std::underlying_type_t<cui8>>);
+static_assert(std::is_same_v<uint8_t,std::underlying_type_t<ui8>>);
 static_assert(std::is_same_v<uint16_t,std::underlying_type_t<ui16>>);
 
 
@@ -136,7 +137,7 @@ constexpr auto max_32 { std::numeric_limits<si32>::max() };
 constexpr auto max_64 { std::numeric_limits<si64>::max() };
 
 
-constexpr auto maxu_8  { std::numeric_limits<cui8 >::max() };
+constexpr auto maxu_8  { std::numeric_limits<ui8 >::max() };
 constexpr auto maxu_16 { std::numeric_limits<ui16>::max() };
 constexpr auto maxu_32 { std::numeric_limits<ui32>::max() };
 constexpr auto maxu_64 { std::numeric_limits<ui64>::max() };
@@ -533,22 +534,22 @@ static_assert(NOT expression_compiles<FROM>, "should " #NOT " compile: " #FROM "
 
 // need to be on separate lines for disambiguation
 check_does_compile(not,  si8 , <<  )
-check_does_compile(   ,  cui8 , << )
+check_does_compile(   ,  ui8 , << )
 check_does_compile(not,  si8 , >>  )
-check_does_compile(   ,  cui8 , >> )
-check_does_compile(not,  cui8 , + (1_ui8 << 010_ui8) + ) // too wide shift
-check_does_compile(   ,  cui8 , + (1_ui8 << 7_ui8) + ) // not too wide shift
-check_does_compile(not,  cui8 , + (0x80_ui8 >> 010_ui8) + ) // too wide shift
-check_does_compile(   ,  cui8 , + (0x80_ui8 >> 7_ui8) + ) // not too wide shift
-check_does_compile(not,  cui8 ,  % ) // modulo 0
+check_does_compile(   ,  ui8 , >> )
+check_does_compile(not,  ui8 , + (1_ui8 << 010_ui8) + ) // too wide shift
+check_does_compile(   ,  ui8 , + (1_ui8 << 7_ui8) + ) // not too wide shift
+check_does_compile(not,  ui8 , + (0x80_ui8 >> 010_ui8) + ) // too wide shift
+check_does_compile(   ,  ui8 , + (0x80_ui8 >> 7_ui8) + ) // not too wide shift
+check_does_compile(not,  ui8 ,  % ) // modulo 0
 check_does_compile(not,  si8 ,  / ) // div 0
 check_does_compile(not,  si8 ,  % ) // modulo not working
-check_does_compile(not,  cui8 ,  / ) // div 0
-check_does_compile(   ,  cui8 , +( 1_ui8  / 1_ui8)+ ) // div
-check_does_compile(   ,  cui8 , +( 11_ui8  % 3_ui8)+ ) // mod
-check_does_compile(not,  cui8 , + 1_si8 + ) // mixed
-check_does_compile(not,  cui8 , + 255_ui8 + 1_ui8 + ) // overflow detect
-check_does_compile(not,  cui8 , + 128_ui8 * 128_ui8 +) // overflow detect
+check_does_compile(not,  ui8 ,  / ) // div 0
+check_does_compile(   ,  ui8 , +( 1_ui8  / 1_ui8)+ ) // div
+check_does_compile(   ,  ui8 , +( 11_ui8  % 3_ui8)+ ) // mod
+check_does_compile(not,  ui8 , + 1_si8 + ) // mixed
+check_does_compile(not,  ui8 , + 255_ui8 + 1_ui8 + ) // overflow detect
+check_does_compile(not,  ui8 , + 128_ui8 * 128_ui8 +) // overflow detect
 check_does_compile(not,  si8 , + 64_si8 * 2_si8 +) // overflow detect
 check_does_compile(not,  si8 , + (-127_si8 - 1_si8) * -1_si8 +) // overflow detect
 check_does_compile(   ,  si8 , + (-127_si8 - 1_si8) * 1_si8 +) // no overflow
@@ -589,7 +590,7 @@ check_does_compile(not,  ui16 , + maxu_16 + v1u_8 +) //  overflow detect
 static_assert(maxu_8  + v1u_64 == 256_ui64 );
 static_assert(maxu_8  + v1u_32 == 256_ui32 );
 static_assert(maxu_8  + v1u_16 == 256_ui16 );
-check_does_compile(not,  cui8 , + maxu_8 + v1u_8 +) //  overflow detect
+check_does_compile(not,  ui8 , + maxu_8 + v1u_8 +) //  overflow detect
 
 // unsigned subtraction underflow detection:
 check_does_compile(not,  ui64 , + 0_ui64 - v1u_64 +) //  overflow detect
@@ -604,10 +605,10 @@ check_does_compile(not,  ui16 , + 0_ui16 - v1u_16 +) //  overflow detect
 check_does_compile(not,  ui16 , + 0_ui16 - v1u_16 +) //  overflow detect
 check_does_compile(not,  ui16 , + 0_ui16 - v1u_16 +) //  overflow detect
 check_does_compile(not,  ui16 , + 0_ui16 - v1u_8 +) //  overflow detect
-check_does_compile(not,  cui8 , + 0_ui8 - v1u_64 +) //  overflow detect
-check_does_compile(not,  cui8 , + 0_ui8 - v1u_32 +) //  overflow detect
-check_does_compile(not,  cui8 , + 0_ui8 - v1u_16 +) //  overflow detect
-check_does_compile(not,  cui8 , + 0_ui8 - v1u_8  +) //  overflow detect
+check_does_compile(not,  ui8 , + 0_ui8 - v1u_64 +) //  overflow detect
+check_does_compile(not,  ui8 , + 0_ui8 - v1u_32 +) //  overflow detect
+check_does_compile(not,  ui8 , + 0_ui8 - v1u_16 +) //  overflow detect
+check_does_compile(not,  ui8 , + 0_ui8 - v1u_8  +) //  overflow detect
 
 
 // demonstrate overflow detection:
@@ -667,12 +668,36 @@ check_does_compile(not,  ui16 , + maxu_16 * v2u_8 +) // overflow detect
 static_assert(maxu_8  * v2u_64 == 510_ui64 );
 static_assert(maxu_8  * v2u_32 == 510_ui32 );
 static_assert(maxu_8  * v2u_16 == 510_ui16 );
-check_does_compile(not,  cui8 , + maxu_8 * v2u_8 +) // overflow detect
+check_does_compile(not,  ui8 , + maxu_8 * v2u_8 +) // overflow detect
 
 check_does_compile(not,  ui16 , + 0xffff_ui16 * 0xffff_ui16 +) // overflow detect
 //static_assert(promote_keep_signedness(0xffff_ui16 * 0xffff_ui16) == 0x1u); // wraps
-check_does_compile(not,  cui8 , + 0xff_ui8 * 0xff_ui8 +) // overflow detect
+check_does_compile(not,  ui8 , + 0xff_ui8 * 0xff_ui8 +) // overflow detect
 //static_assert(0xff_ui8 * 0xff_ui8 == 1_ui8);
+
+
+// LShift operations (on unsigned)
+
+static_assert(2_ui8  == (v1u_8  << v1u_8));
+static_assert(2_ui16 == (v1u_16 << v1u_8));
+static_assert(2_ui32 == (v1u_32 << v1u_8));
+static_assert(2_ui64 == (v1u_64 << v1u_8));
+check_does_compile(not,  ui8 , + v1u_8 << 8_ui8 +) // overflow detect
+check_does_compile(not,  ui16 , + v1u_16 << 16_ui8 +) // overflow detect
+check_does_compile(not,  ui32 , + v1u_32 << 32_ui8 +) // overflow detect
+check_does_compile(not,  ui64 , + v1u_64 << 64_ui8 +) // overflow detect
+
+// RShift operations (on unsigned)
+
+static_assert(0_ui8  == (v1u_8  >> v1u_8));
+static_assert(0_ui16 == (v1u_16 >> v1u_8));
+static_assert(0_ui32 == (v1u_32 >> v1u_8));
+static_assert(0_ui64 == (v1u_64 >> v1u_8));
+check_does_compile(not,  ui8 , + maxu_8 >> 8_ui8 +) // overflow detect
+check_does_compile(not,  ui16 , + maxu_16 >> 16_ui8 +) // overflow detect
+check_does_compile(not,  ui32 , + maxu_32 >> 32_ui8 +) // overflow detect
+check_does_compile(not,  ui64 , + maxu_64 >> 64_ui8 +) // overflow detect
+check_does_compile(not,  ui64 , + maxu_64 >> maxu_64 +) // overflow detect
 
 // the following does not compile due to signed integer overflow on 32bit int
 //static_assert(static_cast<uint16_t>(0xffffu)* static_cast<uint16_t>(0xffffu));
@@ -974,19 +999,27 @@ void ui8OutputAsInteger(){
 void checkedFromInt(){
     using namespace pssscint;
 #ifdef NDEBUG
-    ASSERT_EQUAL(0_ui8,from_int_to<cui8>(2400u));
+    ASSERT_EQUAL(0_ui8,from_int_to<ui8>(2400u));
 #else
   #ifdef PS_ASSERT_THROWS
-    ASSERT_THROWS(from_int_to<cui8>(2400u), char const *);
+    ASSERT_THROWS(from_int_to<ui8>(2400u), char const *);
   #else
     #ifdef PS_TEST_TRAP
     ASSERTM("cannot test trapping without NDEBUG set, change this to true to check for assert() behavior ",false);
-    ASSERT_EQUAL(0,from_int_to<cui8>(2400u)); // assert()
+    ASSERT_EQUAL(0,from_int_to<ui8>(2400u)); // assert()
     #endif
   #endif
 #endif
 
 }
+
+void checkForIncrementOverflowsi8(){
+    auto max = std::numeric_limits<pssscint::si8>::max();
+    ASSERT_THROWS(++max,char const *);
+
+}
+
+
 
 namespace cppnowtalk{
 
@@ -1077,7 +1110,10 @@ bool runAllTests(int argc, char const *argv[]) {
     success = runner(make_suite_CodeGenBenchmark(),"CodeGenBenchmark") && success;
     success &= runner(TestForZeroReturnAssertWithNDEBUG, "TestForZeroReturnAssertWithNDEBUG");
     cute::suite OverflowCheckedTests = make_suite_OverflowCheckedTests();
+	OverflowCheckedTests.push_back(CUTE(checkForIncrementOverflowsi8));
     success &= runner(OverflowCheckedTests, "OverflowCheckedTests");
+    cute::suite NonBuiltInOverflowDetectionTests = make_suite_NonBuiltInOverflowDetectionTests();
+    success &= runner(NonBuiltInOverflowDetectionTests, "NonBuiltInOverflowDetectionTests");
     return success;
 }
 

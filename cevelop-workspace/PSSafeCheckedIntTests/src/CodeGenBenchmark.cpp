@@ -8,6 +8,8 @@
 
 using namespace pssscint;
 
+
+
 template<typename INT>
 struct operations {
     operations(std::initializer_list<INT> seedvalues):values{seedvalues}{};
@@ -122,6 +124,17 @@ void codegenAdditionTest() {
     auto ressi16 =sum( operations<si16>{si16_seed});
     ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 }
+
+#pragma GCC diagnostic push
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wunused-variable"
+
+#else
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+#endif
+
 
 void codegenMultiplicationTest(){
     auto resi16 = product(operations<int16_t>{i16_seed});
@@ -313,6 +326,7 @@ void codegenSubtractionTest(){
 }
 
 }
+#pragma GCC diagnostic pop
 
 
 void testUBSanWithSignedOverflow(){

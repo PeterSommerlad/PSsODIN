@@ -6,39 +6,45 @@
 #include <iosfwd>
 #include <limits>
 #include <climits>
-// check for self-kill possibility
+// define to non-zero for self-kill with core dump
 #ifndef PSSCINT_SHOULD_RAISE
-#define PSSCINT_SHOULD_RAISE 1
+#define PSSCINT_SHOULD_RAISE 0
 #endif
 
 #if PSSCINT_SHOULD_RAISE
 #include <csignal>
+#define PSSCINT_RAISE_SIGFPE() ::raise(SIGFPE)
 #else
-//[[noreturn]] int raise(int); // prevent compile error
+#define PSSCINT_RAISE_SIGFPE()
 #endif
 
-#define ps_assert( cond) \
-   if (not (cond)) { if constexpr (PSSCINT_SHOULD_RAISE) ::raise(SIGFPE); throw(#cond); } /* compile error, but also gcc -Wterminate, attempt self-death */
+#define ps_assert( cond, msg) \
+   if (not (cond)) { if constexpr (PSSCINT_SHOULD_RAISE) PSSCINT_RAISE_SIGFPE() ; throw(#msg); } /* compile error, but also gcc -Wterminate, attempt self-death */
 
+#ifdef NDEBUG
+#define NOEXCEPT_WITH_THROWING_ASSERTS noexcept(true)
+#else
 #define NOEXCEPT_WITH_THROWING_ASSERTS noexcept(false)
-
+#endif
 
 
 
 
 namespace pssscint { // Peter Sommerlad's simple safe checked integers aka PSSODIN - PS Simple Overflow Detecting Integral Numbers
 
+
+
 // unsigned 
-enum class cui8 : std::uint8_t { pssscint_tag_to_prevent_mixing_other_enums };
+enum class ui8 : std::uint8_t { pssscint_tag_to_prevent_mixing_other_enums };
 enum class ui16: std::uint16_t{ pssscint_tag_to_prevent_mixing_other_enums };
 enum class ui32: std::uint32_t{ pssscint_tag_to_prevent_mixing_other_enums };
 enum class ui64: std::uint64_t{ pssscint_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
 consteval
-cui8 operator""_ui8(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<cui8>>::max()) {
-        return cui8(val);
+ui8 operator""_ui8(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<ui8>>::max()) {
+        return ui8(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -323,6 +329,159 @@ promote_to_unsigned(E val) noexcept
 template<typename T>
 concept an_integer = detail_::is_known_integer_v<T>;
 
+#ifdef __has_builtin
+#if __has_builtin(__builtin_add_overflow)
+# define HAVE_GCC_OVERFLOW_CHECKING
+#endif
+#endif
+#if defined(__clang__)
+# define HAVE_GCC_OVERFLOW_CHECKING
+#endif
+
+namespace non_builtin {
+// like built-ins __builtin_add_overflow return true on overflow
+template<an_integer T>
+constexpr bool non_builtin_add_overflow(T l, T r, T* result) noexcept {
+    if constexpr (std::numeric_limits<T>::is_signed){
+        if constexpr(sizeof(T) == sizeof(std::int64_t)){
+            *result = static_cast<T>(static_cast<uint64_t>(l) + static_cast<uint64_t>(r));
+            if (l < 0){
+                return (r<0) && (*result > l);
+            } else {
+                return (r >= 0) && (*result < l);
+            }
+        } else {
+            std::int64_t res {l};
+            res += r;
+            *result = static_cast<T>(res);
+            return res != *result;
+        }
+    } else { // unsigned
+        if constexpr(sizeof(T) == sizeof(std::uint64_t)){
+            *result = l + r;
+            return *result < l; // wrapped when true
+        } else {
+            std::uint64_t res {l};
+            res += r;
+            *result = static_cast<T>(res);
+            return res != *result;
+        }
+    }
+    return true;
+}
+template<an_integer T>
+constexpr bool non_builtin_sub_overflow(T l, T r, T* result) noexcept {
+    if constexpr (std::numeric_limits<T>::is_signed){
+        if constexpr(sizeof(T) == sizeof(std::int64_t)){
+            *result = static_cast<T>(static_cast<uint64_t>(l) - static_cast<uint64_t>(r));
+            if (l >= 0){
+                return (r<0) && (*result < l);
+            } else {
+                return (r >= 0) && (*result > l);
+            }
+        } else {
+            std::int64_t res {l};
+            res -= r;
+            *result = static_cast<T>(res);
+            return res != *result;
+        }
+    } else { // unsigned
+        if constexpr(sizeof(T) == sizeof(std::uint64_t)){
+            *result = l - r;
+            return *result > l; // wrapped when true
+        } else {
+            std::uint64_t res {l};
+            res -= r;
+            *result = static_cast<T>(res);
+            return res != *result;
+        }
+    }
+    return true;
+}
+template<an_integer T>
+constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
+    if constexpr (std::numeric_limits<T>::is_signed){
+        if constexpr(sizeof(T) == sizeof(std::int64_t)){
+            bool resultnegative { (l < 0) != (r < 0) };
+            uint64_t res{};
+            auto abs64 { [](int64_t val) -> uint64_t { return val < 0? 1ULL + ~static_cast<uint64_t>(val):static_cast<uint64_t>(val);} };
+            if (not non_builtin_mul_overflow(abs64(l), abs64(r), &res) ){
+                if (resultnegative) {
+                    if (res <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max())+1ull){
+                        *result = static_cast<T>(1ULL + ~res); // two's complement
+                        return false;
+                    }
+                } else {
+                    if (res <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+                        *result = static_cast<T>(res);
+                        return false;
+                    }
+                }
+            }
+            return true; // overflow
+        } else {
+            std::int64_t res {l};
+            res *= r;
+            *result = static_cast<T>(res);
+            return res != *result; // detect overflow bits
+        }
+    } else { // unsigned
+        if constexpr(sizeof(T) == sizeof(std::uint64_t)){
+            // compute high-parts and low-parts
+            uint64_t lhigh { l >> 32 };
+            uint64_t llow { l & 0xffff'ffffULL} ;
+            uint64_t rhigh { r >> 32 };
+            uint64_t rlow { r & 0xffff'ffffULL} ;
+            if (lhigh > 0 && rhigh > 0) return true;
+            uint64_t high_low{ lhigh>0? lhigh*rlow : rhigh*llow };
+            if (high_low >> 32) return true; // overflow
+            uint64_t low_low { llow * rlow } ;
+            *result = (high_low << 32) + low_low;
+
+            return *result < low_low; // detect overflow
+        } else {
+            std::uint64_t res {l};
+            res *= r;
+            *result = static_cast<T>(res);
+            return res != *result;
+        }
+    }
+    return true;
+}
+} // namespace non_builtin
+
+#ifdef HAVE_GCC_OVERFLOW_CHECKING
+template<an_integer T>
+constexpr bool add_overflow(T l, T r, T* result) noexcept {
+    return __builtin_add_overflow(l,r,result);
+}
+template<an_integer T>
+constexpr bool sub_overflow(T l, T r, T* result) noexcept {
+    return __builtin_sub_overflow(l,r,result);
+}
+template<an_integer T>
+constexpr bool mul_overflow(T l, T r, T* result) noexcept {
+    return __builtin_mul_overflow(l,r,result);
+}
+
+#else // DIY
+template<an_integer T>
+constexpr bool add_overflow(T l, T r, T* result) noexcept {
+    return non_builtin::non_builtin_add_overflow(l,r,result);
+}
+template<an_integer T>
+constexpr bool sub_overflow(T l, T r, T* result) noexcept {
+    return non_builtin::non_builtin_sub_overflow(l,r,result);
+}
+template<an_integer T>
+constexpr bool mul_overflow(T l, T r, T* result) noexcept {
+    return non_builtin::non_builtin_mul_overflow(l,r,result);
+}
+
+#endif
+
+
+
 template<an_integer TARGET, a_safeint E>
 constexpr auto
 promote_and_extend_to_unsigned(E val) noexcept
@@ -363,7 +522,7 @@ from_int(T val) noexcept {
     using std::conditional_t;
     struct cannot_convert_integer{};
     using result_t =
-            conditional_t<is_similar_v<std::uint8_t,T>, cui8,
+            conditional_t<is_similar_v<std::uint8_t,T>, ui8,
              conditional_t<is_similar_v<std::uint16_t,T>, ui16,
               conditional_t<is_similar_v<std::uint32_t,T>, ui32,
                conditional_t<is_similar_v<std::uint64_t,T>, ui64,
@@ -378,9 +537,12 @@ constexpr
 auto
 from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
 {
-#ifdef NDEBUG
 #pragma GCC diagnostic push
-#if defined(__GNUG__) && !defined(__clang__)
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
@@ -388,16 +550,14 @@ from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
     using ultr = std::underlying_type_t<result_t>;
     if constexpr(std::is_unsigned_v<ultr>){
         ps_assert(  (val >= FROM{} &&
-                                val <= std::numeric_limits<ultr>::max())) ;
+                                val <= std::numeric_limits<ultr>::max()), #__FUNCTION__ "integer value out of range") ;
         return static_cast<result_t>(val);
     } else {
         ps_assert(  (val <= std::numeric_limits<ultr>::max() &&
-                                val >= std::numeric_limits<ultr>::min()));
+                                val >= std::numeric_limits<ultr>::min()), #__FUNCTION__ "integer value out of range");
         return static_cast<result_t>(val);
     }
-#ifdef NDEBUG
 #pragma GCC diagnostic pop
-#endif
 
 }
 
@@ -420,10 +580,15 @@ operator-(E l) NOEXCEPT_WITH_THROWING_ASSERTS
 requires std::numeric_limits<E>::is_signed
 {
 #pragma GCC diagnostic push
-#if defined(__GNUG__) && !defined(__clang__)
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
-    ps_assert(  l != std::numeric_limits<E>::min() && "negating std::numeric_limits<E>::min()" );
+#endif
+    ps_assert(  l != std::numeric_limits<E>::min() , "negating std::numeric_limits<E>::min()" );
 #pragma GCC diagnostic pop
     return static_cast<E>(1u + ~promote_to_unsigned(l));
 }
@@ -432,14 +597,14 @@ requires std::numeric_limits<E>::is_signed
 
 template<a_safeint E>
 constexpr E&
-operator++(E& l) noexcept
+operator++(E& l) NOEXCEPT_WITH_THROWING_ASSERTS
 {
-    return l = static_cast<E>(1u + promote_to_unsigned(l));
+    return l = static_cast<E>(1) + l;
 }
 
 template<a_safeint E>
 constexpr E
-operator++(E& l, int) noexcept
+operator++(E& l, int) NOEXCEPT_WITH_THROWING_ASSERTS
 {
     auto result=l;
     ++l;
@@ -447,13 +612,15 @@ operator++(E& l, int) noexcept
 }
 template<a_safeint E>
 constexpr E&
-operator--(E& l) noexcept {
-    return l = static_cast<E>(promote_to_unsigned(l) - 1u);
+operator--(E& l) NOEXCEPT_WITH_THROWING_ASSERTS
+{
+    return l = l - static_cast<E>(1);
 }
 
 template<a_safeint E>
 constexpr E
-operator--(E& l, int) noexcept {
+operator--(E& l, int) NOEXCEPT_WITH_THROWING_ASSERTS
+{
     auto result=l;
     --l;
     return result;
@@ -474,8 +641,18 @@ requires same_signedness<LEFT,RIGHT>
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = detail_::ULT<result_t>;
     ult result{};
-    if (__builtin_add_overflow(static_cast<ult>(l),static_cast<ult>(r),&result)){
-        ps_assert( false && "addition overflow");
+    if (add_overflow(static_cast<ult>(l),static_cast<ult>(r),&result)){
+#pragma GCC diagnostic push
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
+#pragma GCC diagnostic ignored "-Wterminate"
+#endif
+#endif
+        ps_assert( false , "pssscint: integer addition overflow");
+#pragma GCC diagnostic pop
     }
     return static_cast<result_t>(result);
 }
@@ -486,7 +663,7 @@ constexpr auto&
 operator+=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
 requires same_signedness<LEFT,RIGHT>
 {
-    static_assert(sizeof(LEFT) >= sizeof(RIGHT),"adding too large integer type");
+    static_assert(sizeof(LEFT) >= sizeof(RIGHT),"pssscint: adding too large integer type");
     l = static_cast<LEFT>(l+r);
     return l;
 }
@@ -500,8 +677,18 @@ requires same_signedness<LEFT,RIGHT>
     using ult = detail_::ULT<result_t>;
 
     ult result{};
-    if (__builtin_sub_overflow(static_cast<ult>(l),static_cast<ult>(r),&result)){
-        ps_assert( false && "subtraction overflow");
+    if (sub_overflow(static_cast<ult>(l),static_cast<ult>(r),&result)){
+#pragma GCC diagnostic push
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
+#pragma GCC diagnostic ignored "-Wterminate"
+#endif
+#endif
+        ps_assert( false , "pssscint: subtraction overflow");
+#pragma GCC diagnostic pop
     }
     return static_cast<result_t>(result);
 }
@@ -524,9 +711,19 @@ requires same_signedness<LEFT,RIGHT>
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = detail_::ULT<result_t>;
     ult result{};
-    if (__builtin_mul_overflow(static_cast<ult>(l),static_cast<ult>(r),&result)){
-        ps_assert( false && "multiplication overflow");
-    }
+    if (mul_overflow(static_cast<ult>(l),static_cast<ult>(r),&result)){
+#pragma GCC diagnostic push
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
+#pragma GCC diagnostic ignored "-Wterminate"
+#endif
+#endif
+        ps_assert( false , "pssscint: multiplication overflow");
+#pragma GCC diagnostic pop
+     }
     return static_cast<result_t>(result);
 }
 template<a_safeint LEFT, a_safeint RIGHT>
@@ -547,13 +744,18 @@ requires same_signedness<LEFT,RIGHT>
     using ult = detail_::ULT<result_t>;
 
 #pragma GCC diagnostic push
-#if defined(__GNUG__) && !defined(__clang__)
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
-    ps_assert(  r != RIGHT{} && " division by zero");
+#endif
+    ps_assert(  r != RIGHT{} , "pssscint: division by zero");
     if constexpr (std::numeric_limits<result_t>::is_signed){
         // detect -min / -1 which is overflow
-        ps_assert(  result_t{l} != std::numeric_limits<result_t>::min() || r != -RIGHT{1} && "signed division overflow");
+        ps_assert(  static_cast<result_t>(l) != std::numeric_limits<result_t>::min() || r != -RIGHT{1} , "pssscint: signed division overflow");
 #pragma GCC diagnostic pop
        bool result_is_negative = (l < LEFT{}) != (r < RIGHT{});
         auto const absresult =  static_cast<result_t>(
@@ -595,15 +797,20 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = detail_::ULT<result_t>;
 #pragma GCC diagnostic push
-#if defined(__GNUG__) && !defined(__clang__)
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
-    ps_assert(  r != RIGHT{} && " division by zero");
+#endif
+    ps_assert(  r != RIGHT{}, "pssscint: modulo division by zero");
 #pragma GCC diagnostic pop
     return static_cast<result_t>(
             static_cast<ult>(
                     promote_and_extend_to_unsigned<ult>(l)
-                    % // use unsigned op to prevent signed overflow, but wrap.
+                    % // unsigned modulo cannot overflow
                     promote_and_extend_to_unsigned<ult>(r)
             )
     );
@@ -689,16 +896,21 @@ operator<<(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
 requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
 {
 #pragma GCC diagnostic push
-#if defined(__GNUG__) && !defined(__clang__)
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
-    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT && "trying to shift by too many bits");
+#endif
+    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssscint: trying to left-shift by too many bits");
 #pragma GCC diagnostic pop
     return static_cast<LEFT>(promote_keep_signedness(l)<<promote_keep_signedness(r));
 }
 template<a_safeint LEFT, a_safeint RIGHT>
 constexpr auto&
-operator<<=(LEFT &l, RIGHT r) noexcept
+operator<<=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
 requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
 {
     l = (l<<r);
@@ -710,16 +922,21 @@ operator>>(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
 requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
 {
 #pragma GCC diagnostic push
-#if defined(__GNUG__) && !defined(__clang__)
+#if defined(__GNUG__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wexceptions"
+
+#else
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
-    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT && "trying to shift by too many bits");
+#endif
+    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssscint: trying to right-shift by too many bits");
 #pragma GCC diagnostic pop
     return static_cast<LEFT>(promote_keep_signedness(l)>>promote_keep_signedness(r));
 }
 template<a_safeint LEFT, a_safeint RIGHT>
 constexpr auto&
-operator>>=(LEFT &l, RIGHT r) noexcept
+operator>>=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
 requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
 {
     l = (l>>r);
@@ -727,7 +944,6 @@ requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::U
 }
 
 
-//template<a_safeint RIGHT>
 std::ostream& operator<<(std::ostream &out, a_safeint auto value){
     out << promote_keep_signedness(value);
     return out;
