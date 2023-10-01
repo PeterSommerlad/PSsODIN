@@ -6,7 +6,7 @@
 #include <numeric>
 #include "psssafecheckedint.h"
 
-using namespace pssscint;
+using namespace pssodin;
 
 
 
@@ -34,7 +34,7 @@ struct operations {
 };
 
 std::initializer_list<int8_t> i8_seed{1,1,2,3,5,8/*,13,21,34,55,89*/};
-std::initializer_list<pssscint::si8> si8_seed{1_si8,1_si8,2_si8,3_si8,5_si8,8_si8/*,13_si8,21_si8,34_si8,55_si8,89_si8*/};
+std::initializer_list<pssodin::si8> si8_seed{1_csi8,1_csi8,2_csi8,3_csi8,5_csi8,8_csi8/*,13_csi8,21_csi8,34_csi8,55_csi8,89_csi8*/};
 
 auto sum(operations<int8_t> const &ops){
     return ops.sum();
@@ -77,7 +77,7 @@ void codegenMultiplicationTest(){
 //    ASSERT_EQUAL(resi8,promote_keep_signedness(ressi8));
 //    ASSERT_EQUAL(from_int(resi8),ressi8);
     ASSERTM("expect signed integer overflow not detected by ubsan",resi8 < 0);
-//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi8 < 0_si8);
+//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi8 < 0_csi8);
 }
 void codegenSumThirdsTest(){
     auto resi8 = sumthirds(operations<int8_t>{i8_seed});
@@ -92,7 +92,7 @@ void codegenSubtractionTest(){
 
 namespace int16 {
 std::initializer_list<int16_t> i16_seed{1,1,2,3,5,8,13,21,34,55};
-std::initializer_list<pssscint::si16> si16_seed{1_si16,1_si16,2_si16,3_si16,5_si16,8_si16,13_si16,21_si16,34_si16,55_si16};
+std::initializer_list<pssodin::si16> si16_seed{1_csi16,1_csi16,2_csi16,3_csi16,5_csi16,8_csi16,13_csi16,21_csi16,34_csi16,55_csi16};
 
 auto sum(operations<int16_t> const &ops){
     return ops.sum();
@@ -142,7 +142,7 @@ ASSERT_THROWS(    auto ressi16 = product( operations<si16>{si16_seed}); , char c
 //    ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 //    ASSERT_EQUAL(from_int(resi16),ressi16);
     ASSERTM("expect signed integer overflow not detected by ubsan",resi16 < 0);
-//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi16 < 0_si16);
+//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi16 < 0_csi16);
     // no detection of overflow by UBSAN
 
 }
@@ -160,7 +160,7 @@ void codegenSubtractionTest(){
 }
 namespace int32 {
 std::initializer_list<int32_t> i32_seed{1,1,2,3,5,8,13,21,34,55,89};
-std::initializer_list<pssscint::si32> si32_seed{1_si32,1_si32,2_si32,3_si32,5_si32,8_si32,13_si32,21_si32,34_si32,55_si32,89_si32};
+std::initializer_list<pssodin::si32> si32_seed{1_csi32,1_csi32,2_csi32,3_csi32,5_csi32,8_csi32,13_csi32,21_csi32,34_csi32,55_csi32,89_csi32};
 
 auto sum(operations<int32_t> const &ops){
     return ops.sum();
@@ -199,7 +199,7 @@ void codegenMultiplicationTest(){
 //    ASSERT_EQUAL(resi32,promote_keep_signedness(ressi32));
 //    ASSERT_EQUAL(from_int(resi32),ressi32);
     ASSERTM("expect signed integer overflow detected by ubsan",resi32 < 0);
-//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi32 < 0_si32);
+//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi32 < 0_csi32);
     // ../src/CodeGenBenchmark.cpp:23:99: runtime error: signed integer overflow: 122522400 * 89 cannot be represented in type 'int'
 
 }
@@ -218,8 +218,8 @@ void codegenSubtractionTest(){
 namespace int64 {
 constexpr std::initializer_list<int64_t> i64_seed{1,1,2,3,5,8,13,21,34,55,89,
                                         144,233,377,610};
-constexpr std::initializer_list<pssscint::si64> si64_seed{1_si64,1_si64,2_si64,3_si64,5_si64,8_si64,13_si64,21_si64,34_si64,55_si64,89_si64,
-    144_si64,233_si64,377_si64,610_si64};
+constexpr std::initializer_list<pssodin::si64> si64_seed{1_csi64,1_csi64,2_csi64,3_csi64,5_csi64,8_csi64,13_csi64,21_csi64,34_csi64,55_csi64,89_csi64,
+    144_csi64,233_csi64,377_csi64,610_csi64};
 
 auto sum(operations<int64_t> const &ops){
     return ops.sum();
@@ -258,7 +258,7 @@ void codegenMultiplicationTest(){
 //    ASSERT_EQUAL(resi64,promote_keep_signedness(ressi64));
 //    ASSERT_EQUAL(from_int(resi64),ressi64);
     ASSERTM("expect signed integer overflow detected by ubsan",resi64 < 0);
-//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi64 < 0_si64);
+//    ASSERTM("expect signed integer overflow not detected by ubsan",ressi64 < 0_csi64);
     // ../src/CodeGenBenchmark.cpp:23:99: runtime error: signed integer overflow: 137932073613734400 * 610 cannot be represented in type 'long long int'
 
 }
@@ -276,7 +276,7 @@ void codegenSubtractionTest(){
 }
 namespace uint32 {
 std::initializer_list<uint32_t> ui32_seed{1,1,2,3,5,8,13,21,34,55,89};
-std::initializer_list<pssscint::ui32> uui32_seed{1_ui32,1_ui32,2_ui32,3_ui32,5_ui32,8_ui32,13_ui32,21_ui32,34_ui32,55_ui32,89_ui32};
+std::initializer_list<pssodin::ui32> uui32_seed{1_cui32,1_cui32,2_cui32,3_cui32,5_cui32,8_cui32,13_cui32,21_cui32,34_cui32,55_cui32,89_cui32};
 
 auto sum(operations<uint32_t> const &ops){
     return ops.sum();
@@ -339,7 +339,7 @@ void testUBSanWithSignedOverflow(){
 
 
 void testUnSignedOverflowThrows(){
-    auto x=0xffff_ui16;
+    auto x=0xffff_cui16;
 
     ASSERT_THROWS(std::ignore = x * x, char const *);
 

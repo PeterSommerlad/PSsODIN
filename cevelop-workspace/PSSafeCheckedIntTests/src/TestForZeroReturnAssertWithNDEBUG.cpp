@@ -3,15 +3,15 @@
 
 // cannot #define NDEBUG here, because of ODR, must use consistently on all configs
 #include "psssafecheckedint.h"
-    using namespace pssscint;
+    using namespace pssodin;
 
 void thisIsATestForZeroReturnAssertWithNDEBUGTest() {
-    constexpr auto divisor = 0_si8;
-    auto divident = 1_si8;
+    constexpr auto divisor = 0_csi8;
+    auto divident = 1_csi8;
 
 #ifdef NDEBUG
-    ASSERT_EQUAL(0_si8,divident/divisor);
-    ASSERT_EQUAL(0_si8,divident /= divisor );
+    ASSERT_EQUAL(0_csi8,divident/divisor);
+    ASSERT_EQUAL(0_csi8,divident /= divisor );
 #else
   #ifdef PS_ASSERT_THROWS
     ASSERT_THROWS(divident/divisor, char const *);
@@ -23,18 +23,18 @@ void thisIsATestForZeroReturnAssertWithNDEBUGTest() {
     ASSERT(divident != divisor); // dummy to prevent compile warning
   #endif
 #endif
-    //constexpr auto should_not_compile = 1_si8 / divisor; in Test.cpp
+    //constexpr auto should_not_compile = 1_csi8 / divisor; in Test.cpp
 }
 
-//static_assert(1_si8 / 0_si8 == 0_si8, "this should not compile");
+//static_assert(1_csi8 / 0_csi8 == 0_csi8, "this should not compile");
 
 void ModuloTestForZeroReturnAssertWithNDEBUGTest() {
-    constexpr auto divisor = 0_ui8;
-    auto divident = 1_ui8;
+    constexpr auto divisor = 0_cui8;
+    auto divident = 1_cui8;
 
 #ifdef NDEBUG
-    ASSERT_EQUAL(0_ui8,divident % divisor);
-    ASSERT_EQUAL(0_ui8,divident %= divisor );
+    ASSERT_EQUAL(0_cui8,divident % divisor);
+    ASSERT_EQUAL(0_cui8,divident %= divisor );
 #else
   #ifdef PS_ASSERT_THROWS
     ASSERT_THROWS(divident % divisor, char const *);
@@ -47,16 +47,16 @@ void ModuloTestForZeroReturnAssertWithNDEBUGTest() {
   #endif
 #endif
 
-    //constexpr auto should_not_compile = 1_ui8 % divisor; in Test.cpp
+    //constexpr auto should_not_compile = 1_cui8 % divisor; in Test.cpp
 }
 
 void ShiftLeftTestForZeroReturnAssertWithNDEBUGTest() {
-    constexpr auto shiftby = 8_ui8;
-    auto toshift = 0xff_ui8;
+    constexpr auto shiftby = 8_cui8;
+    auto toshift = 0xff_cui8;
 
 #ifdef NDEBUG
-    ASSERT_EQUAL(0_ui8,toshift << shiftby);
-    ASSERT_EQUAL(0_ui8,toshift <<= shiftby );
+    ASSERT_EQUAL(0_cui8,toshift << shiftby);
+    ASSERT_EQUAL(0_cui8,toshift <<= shiftby );
 #else
   #ifdef PS_ASSERT_THROWS
     ASSERT_THROWS(toshift << shiftby, char const *);
@@ -70,15 +70,15 @@ void ShiftLeftTestForZeroReturnAssertWithNDEBUGTest() {
 #endif
     ASSERT(shiftby != toshift); // dummy to prevent compile warning
 
-     //constexpr auto should_not_compile = 1_ui8 << shiftby; in Test.cpp
+     //constexpr auto should_not_compile = 1_cui8 << shiftby; in Test.cpp
 }
 void ShiftRightTestForZeroReturnAssertWithNDEBUGTest() {
-    constexpr auto shiftby = 8_ui8;
-    auto toshift = 0xff_ui8;
+    constexpr auto shiftby = 8_cui8;
+    auto toshift = 0xff_cui8;
 
 #ifdef NDEBUG
-    ASSERT_EQUAL(0_ui8,toshift >> shiftby);
-    ASSERT_EQUAL(0_ui8,toshift >>= shiftby );
+    ASSERT_EQUAL(0_cui8,toshift >> shiftby);
+    ASSERT_EQUAL(0_cui8,toshift >>= shiftby );
 #else
 #ifdef PS_ASSERT_THROWS
     ASSERT_THROWS(toshift >> shiftby, char const *);
@@ -91,7 +91,7 @@ void ShiftRightTestForZeroReturnAssertWithNDEBUGTest() {
   #endif
 #endif
     ASSERT(shiftby != toshift); // dummy to prevent compile warning
-     //constexpr auto should_not_compile = 1_ui8 >> shiftby; in Test.cpp
+     //constexpr auto should_not_compile = 1_cui8 >> shiftby; in Test.cpp
 }
 
 

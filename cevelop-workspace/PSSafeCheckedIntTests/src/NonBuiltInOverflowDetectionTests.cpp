@@ -3,7 +3,7 @@
 
 #include "psssafecheckedint.h"
 
-using namespace pssscint::non_builtin;
+using namespace pssodin::non_builtin;
 
 template<typename INT>
 struct testSignedAddOverflow{

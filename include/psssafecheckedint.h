@@ -1,27 +1,28 @@
-#ifndef SRC_PSSAFECHECKEDINT_
-#define SRC_PSSAFECHECKEDINT_
+#ifndef SRC_PSSODIN_
+#define SRC_PSSODIN_
 
 #include <cstdint>
 #include <type_traits>
 #include <iosfwd>
 #include <limits>
 #include <climits>
-// define to non-zero for self-kill with core dump
-#ifndef PSSCINT_SHOULD_RAISE
-#define PSSCINT_SHOULD_RAISE 0
+// define to non-zero for self-kill with core dump, testing requires 0 for throw
+#ifndef PSSODIN_SHOULD_RAISE
+#define PSSODIN_SHOULD_RAISE 0
 #endif
 
-#if PSSCINT_SHOULD_RAISE
+#if PSSODIN_SHOULD_RAISE
 #include <csignal>
 // SIGFPE dumps core (unless prohibited by OS, i.e., ulimit -c 0, macos cores are more tricky to get
-#define PSSCINT_RAISE_SIGFPE() ::raise(SIGFPE)
+#define PSSODIN_RAISE_SIGFPE() ::raise(SIGFPE)
 #else
-#define PSSCINT_RAISE_SIGFPE()
+#define PSSODIN_RAISE_SIGFPE()
 #endif
 
 #define ps_assert( cond, msg) \
-   if (not (cond)) { if constexpr (PSSCINT_SHOULD_RAISE) PSSCINT_RAISE_SIGFPE() ; throw(#msg); } ;
+   if (not (cond)) { PSSODIN_RAISE_SIGFPE() ; throw(#msg); } ;
 
+// NDEBUG causes std::terminate on errors, unless SIGFPE is raised
 #ifdef NDEBUG
 #define NOEXCEPT_WITH_THROWING_ASSERTS noexcept(true)
 #else
@@ -31,18 +32,18 @@
 
 
 
-namespace pssscint { // Peter Sommerlad's simple safe checked integers aka PSSODIN - PS Simple Overflow Detecting Integral Numbers
+namespace pssodin { // Peter Sommerlad's simple Overflow Detecting Integral Numbers PSsODIN
 
 
 // unsigned 
-enum class [[nodiscard]] ui8: std::uint8_t { pssscint_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]ui16: std::uint16_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]ui32: std::uint32_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]ui64: std::uint64_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]] ui8: std::uint8_t { pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]ui16: std::uint16_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]ui32: std::uint32_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]ui64: std::uint64_t{ pssodin_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
 consteval
-ui8 operator""_ui8(unsigned long long val) {
+ui8 operator""_cui8(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<ui8>>::max()) {
         return ui8(val);
     } else {
@@ -52,7 +53,7 @@ ui8 operator""_ui8(unsigned long long val) {
 
 
 consteval
-ui16 operator""_ui16(unsigned long long val) {
+ui16 operator""_cui16(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<ui16>>::max()) {
         return ui16(val);
     } else {
@@ -62,7 +63,7 @@ ui16 operator""_ui16(unsigned long long val) {
 
 
 consteval
-ui32 operator""_ui32(unsigned long long val) {
+ui32 operator""_cui32(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<ui32>>::max()) {
         return ui32(val);
     } else {
@@ -72,7 +73,7 @@ ui32 operator""_ui32(unsigned long long val) {
 
 
 consteval
-ui64 operator""_ui64(unsigned long long val) {
+ui64 operator""_cui64(unsigned long long val) {
     if constexpr (sizeof(ui64) < sizeof(val)){
         if (val > 0xffff'ffff'fffffffful) {
             throw "integral constant too large"; // trigger compile-time error
@@ -83,14 +84,14 @@ ui64 operator""_ui64(unsigned long long val) {
 
 }
 // signed
-enum class [[nodiscard]]si8 : std::int8_t { pssscint_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]si16: std::int16_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]si32: std::int32_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]si64: std::int64_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si8 : std::int8_t { pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si16: std::int16_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si32: std::int32_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si64: std::int64_t{ pssodin_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
 consteval
-si8 operator""_si8(unsigned long long val) {
+si8 operator""_csi8(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<si8>>::max()) {
         return si8(val);
     } else {
@@ -100,7 +101,7 @@ si8 operator""_si8(unsigned long long val) {
 
 
 consteval
-si16 operator""_si16(unsigned long long val) {
+si16 operator""_csi16(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<si16>>::max()) {
         return si16(val);
     } else {
@@ -110,7 +111,7 @@ si16 operator""_si16(unsigned long long val) {
 
 
 consteval
-si32 operator""_si32(unsigned long long val) {
+si32 operator""_csi32(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<si32>>::max()) {
         return si32(val);
     } else {
@@ -120,7 +121,7 @@ si32 operator""_si32(unsigned long long val) {
 
 
 consteval
-si64 operator""_si64(unsigned long long val) {
+si64 operator""_csi64(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<si64>>::max()) {
         return si64(val);
     } else {
@@ -143,7 +144,7 @@ namespace detail_ {
 // from C++23
 template<an_enum T>
 constexpr bool
-is_scoped_enum_v = !std::is_convertible_v<T, std::underlying_type_t<T>>;
+is_scoped_enum_v = not std::is_convertible_v<T, std::underlying_type_t<T>>;
 
 template<typename T>
 concept a_scoped_enum = is_scoped_enum_v<T>;
@@ -157,7 +158,7 @@ is_safeint_v = false;
 
 template<a_scoped_enum E>
 constexpr bool
-is_safeint_v<E> = requires { E{} == E::pssscint_tag_to_prevent_mixing_other_enums; } ;
+is_safeint_v<E> = requires { E{} == E::pssodin_tag_to_prevent_mixing_other_enums; } ;
 
 template<typename E>
 using ULT=std::conditional_t<std::is_enum_v<plain<E>>,std::underlying_type_t<plain<E>>,plain<E>>;
@@ -187,10 +188,10 @@ namespace std {
 
 
 
-template<pssscint::a_safeint type>
+template<pssodin::a_safeint type>
   struct numeric_limits<type>
   {
-    using ult = pssscint::detail_::ULT<type>;
+    using ult = pssodin::detail_::ULT<type>;
     static constexpr bool is_specialized = true;
 
     static constexpr type
@@ -253,7 +254,7 @@ template<pssscint::a_safeint type>
 
 }
 
-namespace pssscint{
+namespace pssodin{
 
 namespace detail_{
 
@@ -277,25 +278,22 @@ template<typename INT, typename TESTED>
 constexpr bool
 is_compatible_integer_v = std::is_same_v<TESTED,INT> ||
    (   std::is_integral_v<TESTED>
-   && !std::is_same_v<bool,TESTED>
-   && !is_chartype_v<TESTED>
+   && not std::is_same_v<bool,TESTED>
+   && not is_chartype_v<TESTED>
    && (std::is_unsigned_v<INT> == std::is_unsigned_v<TESTED>)
    && std::numeric_limits<TESTED>::max() == std::numeric_limits<INT>::max() );
 
-template<typename INT, typename TESTED>
-constexpr bool
-is_similar_v=is_compatible_integer_v<INT,TESTED>;
 
 template<typename TESTED>
 constexpr bool
-is_known_integer_v =    is_similar_v<std::uint8_t,  TESTED>
-                     || is_similar_v<std::uint16_t, TESTED>
-                     || is_similar_v<std::uint32_t, TESTED>
-                     || is_similar_v<std::uint64_t, TESTED>
-                     || is_similar_v<std::int8_t,  TESTED>
-                     || is_similar_v<std::int16_t, TESTED>
-                     || is_similar_v<std::int32_t, TESTED>
-                     || is_similar_v<std::int64_t, TESTED>;
+is_known_integer_v =    is_compatible_integer_v<std::uint8_t,  TESTED>
+                     || is_compatible_integer_v<std::uint16_t, TESTED>
+                     || is_compatible_integer_v<std::uint32_t, TESTED>
+                     || is_compatible_integer_v<std::uint64_t, TESTED>
+                     || is_compatible_integer_v<std::int8_t,  TESTED>
+                     || is_compatible_integer_v<std::int16_t, TESTED>
+                     || is_compatible_integer_v<std::int32_t, TESTED>
+                     || is_compatible_integer_v<std::int64_t, TESTED>;
 
 }
 
@@ -533,18 +531,18 @@ template<an_integer T>
 [[nodiscard]]
 constexpr auto
 from_int(T val) noexcept {
-    using detail_::is_similar_v;
+    using detail_::is_compatible_integer_v;
     using std::conditional_t;
     struct cannot_convert_integer{};
     using result_t =
-            conditional_t<is_similar_v<std::uint8_t,T>, ui8,
-             conditional_t<is_similar_v<std::uint16_t,T>, ui16,
-              conditional_t<is_similar_v<std::uint32_t,T>, ui32,
-               conditional_t<is_similar_v<std::uint64_t,T>, ui64,
-                conditional_t<is_similar_v<std::int8_t,T>, si8,
-                 conditional_t<is_similar_v<std::int16_t,T>, si16,
-                  conditional_t<is_similar_v<std::int32_t,T>, si32,
-                   conditional_t<is_similar_v<std::int64_t,T>, si64, cannot_convert_integer>>>>>>>>;
+            conditional_t<is_compatible_integer_v<std::uint8_t,T>, ui8,
+             conditional_t<is_compatible_integer_v<std::uint16_t,T>, ui16,
+              conditional_t<is_compatible_integer_v<std::uint32_t,T>, ui32,
+               conditional_t<is_compatible_integer_v<std::uint64_t,T>, ui64,
+                conditional_t<is_compatible_integer_v<std::int8_t,T>, si8,
+                 conditional_t<is_compatible_integer_v<std::int16_t,T>, si16,
+                  conditional_t<is_compatible_integer_v<std::int32_t,T>, si32,
+                   conditional_t<is_compatible_integer_v<std::int64_t,T>, si64, cannot_convert_integer>>>>>>>>;
     return static_cast<result_t>(val); // no need to check, result_t corresponds to input T's range
 }
 // path tests are compile-time checked:
@@ -667,7 +665,7 @@ requires same_signedness<LEFT,RIGHT>
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
-        ps_assert( false , "pssscint: integer addition overflow");
+        ps_assert( false , "pssodin: integer addition overflow");
 #pragma GCC diagnostic pop
     }
     return static_cast<result_t>(result);
@@ -679,7 +677,7 @@ constexpr auto&
 operator+=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
 requires same_signedness<LEFT,RIGHT>
 {
-    static_assert(sizeof(LEFT) >= sizeof(RIGHT),"pssscint: adding too large integer type");
+    static_assert(sizeof(LEFT) >= sizeof(RIGHT),"pssodin: adding too large integer type");
     l = static_cast<LEFT>(l+r);
     return l;
 }
@@ -703,7 +701,7 @@ requires same_signedness<LEFT,RIGHT>
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
-        ps_assert( false , "pssscint: subtraction overflow");
+        ps_assert( false , "pssodin: subtraction overflow");
 #pragma GCC diagnostic pop
     }
     return static_cast<result_t>(result);
@@ -737,7 +735,7 @@ requires same_signedness<LEFT,RIGHT>
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
-        ps_assert( false , "pssscint: multiplication overflow");
+        ps_assert( false , "pssodin: multiplication overflow");
 #pragma GCC diagnostic pop
      }
     return static_cast<result_t>(result);
@@ -768,10 +766,10 @@ requires same_signedness<LEFT,RIGHT>
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
-    ps_assert(  r != RIGHT{} , "pssscint: division by zero");
+    ps_assert(  r != RIGHT{} , "pssodin: division by zero");
     if constexpr (std::numeric_limits<result_t>::is_signed){
         // detect -min / -1 which is overflow
-        ps_assert(  static_cast<result_t>(l) != std::numeric_limits<result_t>::min() || r != -RIGHT{1} , "pssscint: signed division overflow");
+        ps_assert(  static_cast<result_t>(l) != std::numeric_limits<result_t>::min() || r != -RIGHT{1} , "pssodin: signed division overflow");
 #pragma GCC diagnostic pop
        bool result_is_negative = (l < LEFT{}) != (r < RIGHT{});
         auto const absresult =  static_cast<result_t>(
@@ -821,7 +819,7 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
-    ps_assert(  r != RIGHT{}, "pssscint: modulo division by zero");
+    ps_assert(  r != RIGHT{}, "pssodin: modulo division by zero");
 #pragma GCC diagnostic pop
     return static_cast<result_t>(
             static_cast<ult>(
@@ -920,7 +918,7 @@ requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::U
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
-    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssscint: trying to left-shift by too many bits");
+    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssodin: trying to left-shift by too many bits");
 #pragma GCC diagnostic pop
     return static_cast<LEFT>(promote_keep_signedness(l)<<promote_keep_signedness(r));
 }
@@ -946,7 +944,7 @@ requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::U
 #pragma GCC diagnostic ignored "-Wterminate"
 #endif
 #endif
-    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssscint: trying to right-shift by too many bits");
+    ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssodin: trying to right-shift by too many bits");
 #pragma GCC diagnostic pop
     return static_cast<LEFT>(promote_keep_signedness(l)>>promote_keep_signedness(r));
 }
@@ -969,4 +967,4 @@ std::ostream& operator<<(std::ostream &out, a_safeint auto value){
 
 #undef ps_assert
 
-#endif /* SRC_PSSSAFECHECKEDINT_ */
+#endif /* SRC_PSSODIN_ */

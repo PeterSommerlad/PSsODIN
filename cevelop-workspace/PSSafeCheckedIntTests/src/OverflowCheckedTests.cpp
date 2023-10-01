@@ -4,7 +4,7 @@
 
 #include <string>
 
-using namespace pssscint;
+using namespace pssodin;
 
 using exception_t = char const *;
 
@@ -23,10 +23,10 @@ void si16minnegateOverflows() {
 void si16mindividedbyminus1Overflows(){
     const auto minimum { std::numeric_limits<si16>::min() };
     try {
-        std::ignore = minimum / -1_si16;
+        std::ignore = minimum / -1_csi16;
     } catch (exception_t const exc) {
         std::string const msg{exc};
-        std::string const expectedend{"\"pssscint: signed division overflow\""};
+        std::string const expectedend{"\"pssodin: signed division overflow\""};
         ASSERT_EQUALM(msg,expectedend, msg.substr(msg.size()-expectedend.size()));
     }
 }
@@ -35,18 +35,18 @@ void si16mindividedbyminus1Overflows(){
 
 void s16minimumdividedbyoneIsminimum(){
     auto const minimum { std::numeric_limits<si16>::min()  };
-    ASSERT_EQUAL(minimum, minimum / 1_si16);
+    ASSERT_EQUAL(minimum, minimum / 1_csi16);
 
 }
 
 void s16MultiplicationOverflowDetected(){
-    auto const operand { 0x7fff_si16 };
+    auto const operand { 0x7fff_csi16 };
     ASSERT_THROWS(std::ignore = operand * operand, exception_t);
 }
 
 void s16AdditionOverflowDetected(){
-    auto const operand { 0x7fff_si16 };
-    ASSERT_THROWS(std::ignore = operand + 1_si16, exception_t);
+    auto const operand { 0x7fff_csi16 };
+    ASSERT_THROWS(std::ignore = operand + 1_csi16, exception_t);
 
 }
 void s16IncrementOverflowDetected(){
@@ -61,18 +61,18 @@ void s16DecrementOverflowDetected(){
 
 void u16minimumdividedbyoneIsminimum(){
     auto const minimum { std::numeric_limits<ui16>::min()  };
-    ASSERT_EQUAL(minimum, minimum / 1_ui16);
+    ASSERT_EQUAL(minimum, minimum / 1_cui16);
 
 }
 
 void u16MultiplicationOverflowDetected(){
-    auto const operand { 0x7fff_ui16 };
+    auto const operand { 0x7fff_cui16 };
     ASSERT_THROWS(std::ignore = operand * operand, exception_t);
 }
 
 void u16AdditionOverflowDetected(){
-    auto const operand { 0xffff_ui16 };
-    ASSERT_THROWS(std::ignore = operand + 1_ui16, exception_t);
+    auto const operand { 0xffff_cui16 };
+    ASSERT_THROWS(std::ignore = operand + 1_cui16, exception_t);
 
 }
 void u16IncrementOverflowDetected(){
@@ -81,18 +81,18 @@ void u16IncrementOverflowDetected(){
 }
 
 void u16DecrementOverflowDetected(){
-    auto min{ 0_ui16 };
+    auto min{ 0_cui16 };
     ASSERT_THROWS(--min, exception_t);
 }
 
 void u16LShiftOverflowDetected(){
-    auto const val{ 1_ui16 };
-    ASSERT_THROWS(std::ignore = val << 16_ui8, exception_t);
+    auto const val{ 1_cui16 };
+    ASSERT_THROWS(std::ignore = val << 16_cui8, exception_t);
 }
 
 void u16RShiftOverflowDetected(){
-    auto const val{ 1_ui16 };
-    ASSERT_THROWS(std::ignore = val >> 16_ui8, exception_t);
+    auto const val{ 1_cui16 };
+    ASSERT_THROWS(std::ignore = val >> 16_cui8, exception_t);
 }
 
 void si8incrementOverflow(){
@@ -227,100 +227,100 @@ void ui64postdecrementOverflow(){
 
 void si8addtoMaxOverflow(){
     auto const max = std::numeric_limits<si8>::max();
-    ASSERT_THROWS(std::ignore = 1_si8+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_csi8+max,char const *);
 }
 void si8addtoMinOverflow(){
     auto const min = std::numeric_limits<si8>::min();
-    ASSERT_THROWS(std::ignore = -1_si8+min,char const *);
+    ASSERT_THROWS(std::ignore = -1_csi8+min,char const *);
 }
 void si16addtoMaxOverflow(){
     auto const max = std::numeric_limits<si16>::max();
-    ASSERT_THROWS(std::ignore = 1_si16+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_csi16+max,char const *);
 }
 void si16addtoMinOverflow(){
     auto const min = std::numeric_limits<si16>::min();
-    ASSERT_THROWS(std::ignore = -1_si16+min,char const *);
+    ASSERT_THROWS(std::ignore = -1_csi16+min,char const *);
 }
 void si32addtoMaxOverflow(){
     auto const max = std::numeric_limits<si32>::max();
-    ASSERT_THROWS(std::ignore = 1_si32+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_csi32+max,char const *);
 }
 void si32addtoMinOverflow(){
     auto const min = std::numeric_limits<si32>::min();
-    ASSERT_THROWS(std::ignore = -1_si32+min,char const *);
+    ASSERT_THROWS(std::ignore = -1_csi32+min,char const *);
 }
 void si64addtoMaxOverflow(){
     auto const max = std::numeric_limits<si64>::max();
-    ASSERT_THROWS(std::ignore = 1_si64+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_csi64+max,char const *);
 }
 void si64addtoMinOverflow(){
     auto const min = std::numeric_limits<si64>::min();
-    ASSERT_THROWS(std::ignore = -1_si64+min,char const *);
+    ASSERT_THROWS(std::ignore = -1_csi64+min,char const *);
 }
 void ui8addtoMaxOverflow(){
     auto const max = std::numeric_limits<ui8>::max();
-    ASSERT_THROWS(std::ignore = 1_ui8+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_cui8+max,char const *);
 }
 void ui16addtoMaxOverflow(){
     auto const max = std::numeric_limits<ui16>::max();
-    ASSERT_THROWS(std::ignore = 1_ui16+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_cui16+max,char const *);
 }
 void ui32addtoMaxOverflow(){
     auto const max = std::numeric_limits<ui32>::max();
-    ASSERT_THROWS(std::ignore = 1_ui32+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_cui32+max,char const *);
 }
 void ui64addtoMaxOverflow(){
     auto const max = std::numeric_limits<ui64>::max();
-    ASSERT_THROWS(std::ignore = 1_ui64+max,char const *);
+    ASSERT_THROWS(std::ignore = 1_cui64+max,char const *);
 }
 
 void si8subfromMaxOverflow(){
     auto const max = std::numeric_limits<si8>::max();
-    ASSERT_THROWS(std::ignore = max - -1_si8,char const *);
+    ASSERT_THROWS(std::ignore = max - -1_csi8,char const *);
 }
 void si8subfromMinOverflow(){
     auto const min = std::numeric_limits<si8>::min();
-    ASSERT_THROWS(std::ignore = min - 1_si8,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_csi8,char const *);
 }
 void ui8subfromZeroOverflow(){
     auto const min = std::numeric_limits<ui8>::min();
-    ASSERT_THROWS(std::ignore = min - 1_ui8,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_cui8,char const *);
 }
 void si16subfromMaxOverflow(){
     auto const max = std::numeric_limits<si16>::max();
-    ASSERT_THROWS(std::ignore = max - -1_si16,char const *);
+    ASSERT_THROWS(std::ignore = max - -1_csi16,char const *);
 }
 void si16subfromMinOverflow(){
     auto const min = std::numeric_limits<si16>::min();
-    ASSERT_THROWS(std::ignore = min - 1_si16,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_csi16,char const *);
 }
 void ui16subfromZeroOverflow(){
     auto const min = std::numeric_limits<ui16>::min();
-    ASSERT_THROWS(std::ignore = min - 1_ui16,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_cui16,char const *);
 }
 void si32subfromMaxOverflow(){
     auto const max = std::numeric_limits<si32>::max();
-    ASSERT_THROWS(std::ignore = max - -1_si32,char const *);
+    ASSERT_THROWS(std::ignore = max - -1_csi32,char const *);
 }
 void si32subfromMinOverflow(){
     auto const min = std::numeric_limits<si32>::min();
-    ASSERT_THROWS(std::ignore = min - 1_si32,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_csi32,char const *);
 }
 void ui32subfromZeroOverflow(){
     auto const min = std::numeric_limits<ui32>::min();
-    ASSERT_THROWS(std::ignore = min - 1_ui32,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_cui32,char const *);
 }
 void si64subfromMaxOverflow(){
     auto const max = std::numeric_limits<si64>::max();
-    ASSERT_THROWS(std::ignore = max - -1_si64,char const *);
+    ASSERT_THROWS(std::ignore = max - -1_csi64,char const *);
 }
 void si64subfromMinOverflow(){
     auto const min = std::numeric_limits<si64>::min();
-    ASSERT_THROWS(std::ignore = min - 1_si64,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_csi64,char const *);
 }
 void ui64subfromZeroOverflow(){
     auto const min = std::numeric_limits<ui64>::min();
-    ASSERT_THROWS(std::ignore = min - 1_ui64,char const *);
+    ASSERT_THROWS(std::ignore = min - 1_cui64,char const *);
 }
 
 

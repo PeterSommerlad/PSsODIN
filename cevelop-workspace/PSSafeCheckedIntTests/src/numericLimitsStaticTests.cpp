@@ -30,7 +30,7 @@ done
 
 
 */
-using namespace pssscint;
+using namespace pssodin;
 
 static_assert(std::numeric_limits<si8>::min() == from_int(std::numeric_limits<std::underlying_type_t<si8>>::min()) );
 static_assert(std::numeric_limits<si8>::max() == from_int(std::numeric_limits<std::underlying_type_t<si8>>::max()) );
