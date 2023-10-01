@@ -715,6 +715,8 @@ check_does_compile(not,  si32, + std::numeric_limits<si32>::min() / -1_csi32  +)
 //static_assert(std::numeric_limits<si32>::min() / 1_csi32 == std::numeric_limits<si32>::min()); // wraps
 //static_assert(std::numeric_limits<si32>::min() / -1_csi32 == std::numeric_limits<si32>::min()); // wraps
 
+#ifdef __clang__
+// doesn't seem to work with gcc
 int from_int(...); // cause non-matching code below to SFINAE
 
 
@@ -728,6 +730,7 @@ check_does_compile(not ,  ui8, + from_int(true)  +) // invalid conversion
 //static_assert(32_cui8 == from_int(U' ')); // does not compile
 //static_assert(32_cui8 == from_int(L' ')); // does not compile
 //static_assert(1_cui8 == from_int_to<ui8>(true)); // does not compile
+#endif
 
 // to signed from signed
 
