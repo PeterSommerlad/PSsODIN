@@ -341,7 +341,7 @@ void testUBSanWithSignedOverflow(){
 void testUnSignedOverflowThrows(){
     auto x=0xffff_ui16;
 
-    ASSERT_THROWS(x * x, char const *);
+    ASSERT_THROWS(std::ignore = x * x, char const *);
 
 }
 

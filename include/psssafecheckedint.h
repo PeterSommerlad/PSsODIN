@@ -1,5 +1,5 @@
-#ifndef SRC_PSSAFEINT_
-#define SRC_PSSAFEINT_
+#ifndef SRC_PSSAFECHECKEDINT_
+#define SRC_PSSAFECHECKEDINT_
 
 #include <cstdint>
 #include <type_traits>
@@ -13,13 +13,14 @@
 
 #if PSSCINT_SHOULD_RAISE
 #include <csignal>
+// SIGFPE dumps core (unless prohibited by OS, i.e., ulimit -c 0, macos cores are more tricky to get
 #define PSSCINT_RAISE_SIGFPE() ::raise(SIGFPE)
 #else
 #define PSSCINT_RAISE_SIGFPE()
 #endif
 
 #define ps_assert( cond, msg) \
-   if (not (cond)) { if constexpr (PSSCINT_SHOULD_RAISE) PSSCINT_RAISE_SIGFPE() ; throw(#msg); } /* compile error, but also gcc -Wterminate, attempt self-death */
+   if (not (cond)) { if constexpr (PSSCINT_SHOULD_RAISE) PSSCINT_RAISE_SIGFPE() ; throw(#msg); } ;
 
 #ifdef NDEBUG
 #define NOEXCEPT_WITH_THROWING_ASSERTS noexcept(true)
@@ -33,12 +34,11 @@
 namespace pssscint { // Peter Sommerlad's simple safe checked integers aka PSSODIN - PS Simple Overflow Detecting Integral Numbers
 
 
-
 // unsigned 
-enum class ui8 : std::uint8_t { pssscint_tag_to_prevent_mixing_other_enums };
-enum class ui16: std::uint16_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class ui32: std::uint32_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class ui64: std::uint64_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]] ui8: std::uint8_t { pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]ui16: std::uint16_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]ui32: std::uint32_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]ui64: std::uint64_t{ pssscint_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
 consteval
@@ -83,10 +83,10 @@ ui64 operator""_ui64(unsigned long long val) {
 
 }
 // signed
-enum class si8 : std::int8_t { pssscint_tag_to_prevent_mixing_other_enums };
-enum class si16: std::int16_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class si32: std::int32_t{ pssscint_tag_to_prevent_mixing_other_enums };
-enum class si64: std::int64_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si8 : std::int8_t { pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si16: std::int16_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si32: std::int32_t{ pssscint_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]si64: std::int64_t{ pssscint_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
 consteval
@@ -303,6 +303,7 @@ template<typename LEFT, typename RIGHT>
 concept same_signedness = detail_::same_signedness_v<LEFT,RIGHT>;
 
 template<a_safeint E>
+[[nodiscard]]
 constexpr auto
 promote_keep_signedness(E val) noexcept
 { // promote keeping signedness
@@ -311,6 +312,7 @@ promote_keep_signedness(E val) noexcept
 
 // not used in framework:
 template<a_safeint E>
+[[nodiscard]]
 constexpr auto
 to_underlying(E val) noexcept 
 { // plain value with all bad properties
@@ -318,6 +320,7 @@ to_underlying(E val) noexcept
 }
 
 template<a_safeint E>
+[[nodiscard]]
 constexpr auto
 promote_to_unsigned(E val) noexcept
 { // promote to unsigned for wrap around arithmetic
@@ -341,6 +344,7 @@ concept an_integer = detail_::is_known_integer_v<T>;
 namespace non_builtin {
 // like built-ins __builtin_add_overflow return true on overflow
 template<an_integer T>
+[[nodiscard]]
 constexpr bool non_builtin_add_overflow(T l, T r, T* result) noexcept {
     if constexpr (std::numeric_limits<T>::is_signed){
         if constexpr(sizeof(T) == sizeof(std::int64_t)){
@@ -370,6 +374,7 @@ constexpr bool non_builtin_add_overflow(T l, T r, T* result) noexcept {
     return true;
 }
 template<an_integer T>
+[[nodiscard]]
 constexpr bool non_builtin_sub_overflow(T l, T r, T* result) noexcept {
     if constexpr (std::numeric_limits<T>::is_signed){
         if constexpr(sizeof(T) == sizeof(std::int64_t)){
@@ -399,6 +404,7 @@ constexpr bool non_builtin_sub_overflow(T l, T r, T* result) noexcept {
     return true;
 }
 template<an_integer T>
+[[nodiscard]]
 constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
     if constexpr (std::numeric_limits<T>::is_signed){
         if constexpr(sizeof(T) == sizeof(std::int64_t)){
@@ -452,28 +458,34 @@ constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
 
 #ifdef HAVE_GCC_OVERFLOW_CHECKING
 template<an_integer T>
+[[nodiscard]]
 constexpr bool add_overflow(T l, T r, T* result) noexcept {
     return __builtin_add_overflow(l,r,result);
 }
 template<an_integer T>
+[[nodiscard]]
 constexpr bool sub_overflow(T l, T r, T* result) noexcept {
     return __builtin_sub_overflow(l,r,result);
 }
 template<an_integer T>
+[[nodiscard]]
 constexpr bool mul_overflow(T l, T r, T* result) noexcept {
     return __builtin_mul_overflow(l,r,result);
 }
 
 #else // DIY
 template<an_integer T>
+[[nodiscard]]
 constexpr bool add_overflow(T l, T r, T* result) noexcept {
     return non_builtin::non_builtin_add_overflow(l,r,result);
 }
 template<an_integer T>
+[[nodiscard]]
 constexpr bool sub_overflow(T l, T r, T* result) noexcept {
     return non_builtin::non_builtin_sub_overflow(l,r,result);
 }
 template<an_integer T>
+[[nodiscard]]
 constexpr bool mul_overflow(T l, T r, T* result) noexcept {
     return non_builtin::non_builtin_mul_overflow(l,r,result);
 }
@@ -483,6 +495,7 @@ constexpr bool mul_overflow(T l, T r, T* result) noexcept {
 
 
 template<an_integer TARGET, a_safeint E>
+[[nodiscard]]
 constexpr auto
 promote_and_extend_to_unsigned(E val) noexcept
 { // promote to unsigned for wrap around arithmetic, with sign extension if needed
@@ -492,6 +505,7 @@ promote_and_extend_to_unsigned(E val) noexcept
        return static_cast<u_result_t>(static_cast<s_result_t>(promote_keep_signedness(val)));// promote with sign extension
 }
 template<an_integer TARGET, a_safeint E>
+[[nodiscard]]
 constexpr auto
 abs_promoted_and_extended_as_unsigned(E val) noexcept
  requires (std::numeric_limits<TARGET>::is_signed)
@@ -516,6 +530,7 @@ abs_promoted_and_extended_as_unsigned(E val) noexcept
 
 
 template<an_integer T>
+[[nodiscard]]
 constexpr auto
 from_int(T val) noexcept {
     using detail_::is_similar_v;
@@ -530,11 +545,12 @@ from_int(T val) noexcept {
                  conditional_t<is_similar_v<std::int16_t,T>, si16,
                   conditional_t<is_similar_v<std::int32_t,T>, si32,
                    conditional_t<is_similar_v<std::int64_t,T>, si64, cannot_convert_integer>>>>>>>>;
-    return static_cast<result_t>(val);
+    return static_cast<result_t>(val); // no need to check, result_t corresponds to input T's range
 }
+// path tests are compile-time checked:
 template<a_safeint TO, an_integer FROM>
-constexpr 
-auto
+[[nodiscard]]
+constexpr auto
 from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
 {
 #pragma GCC diagnostic push
@@ -549,32 +565,30 @@ from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
     using result_t = TO;
     using ultr = std::underlying_type_t<result_t>;
     if constexpr(std::is_unsigned_v<ultr>){
-        ps_assert(  (val >= FROM{} &&
-                                val <= std::numeric_limits<ultr>::max()), #__FUNCTION__ "integer value out of range") ;
-        return static_cast<result_t>(val);
+        ps_assert(  (val >= FROM{} && // in case FROM is signed
+                     static_cast<std::make_unsigned_t<FROM>>(val) <= std::numeric_limits<ultr>::max()), #__FUNCTION__ "integer value out of range") ;
     } else {
-        ps_assert(  (val <= std::numeric_limits<ultr>::max() &&
+        if constexpr (std::is_unsigned_v<FROM>){
+            ps_assert(  val <= static_cast<std::make_unsigned_t<ultr>>(std::numeric_limits<ultr>::max()), #__FUNCTION__ "integer value out of range");
+
+        } else { // both are signed
+            ps_assert(  (val <= std::numeric_limits<ultr>::max() &&
                                 val >= std::numeric_limits<ultr>::min()), #__FUNCTION__ "integer value out of range");
-        return static_cast<result_t>(val);
+        }
     }
 #pragma GCC diagnostic pop
-
+    return static_cast<result_t>(val); // cast is checked above
 }
 
 
 // comparison
 // not needed, we won't mix types in comparison.
-
-//template<a_safeint E>
-//constexpr auto
-//operator<=>(E l, E r) noexcept
-//{
-//	return l <=> r;
-//}
+// enum class types compare three way implicitly with themselves
 
 
 // negation for signed types only, two's complement
 template<a_safeint E>
+[[nodiscard]]
 constexpr E
 operator-(E l) NOEXCEPT_WITH_THROWING_ASSERTS
 requires std::numeric_limits<E>::is_signed
@@ -592,6 +606,7 @@ requires std::numeric_limits<E>::is_signed
 #pragma GCC diagnostic pop
     return static_cast<E>(1u + ~promote_to_unsigned(l));
 }
+
 
 // increment/decrement
 
@@ -630,6 +645,7 @@ operator--(E& l, int) NOEXCEPT_WITH_THROWING_ASSERTS
 
 // arithmetic
 
+//// TODO: continue compile time tests for operators below
 
 
 template<a_safeint LEFT, a_safeint RIGHT>
@@ -763,8 +779,8 @@ requires same_signedness<LEFT,RIGHT>
                                 abs_promoted_and_extended_as_unsigned<ult>(l)
                                 / // use unsigned op to prevent signed overflow, but wrap.
                                 abs_promoted_and_extended_as_unsigned<ult>(r)));
-        auto minintdivone = [&]{return absresult == std::numeric_limits<result_t>::min() && r == RIGHT{1} ;};
-        if (result_is_negative && not minintdivone() ) {
+        auto minint_div_one = [&]{return absresult == std::numeric_limits<result_t>::min() && r == RIGHT{1} ;};
+        if (result_is_negative && not minint_div_one() ) {
             return -absresult; // compute two's complement, not built-in
         } else {
             return absresult;
@@ -773,7 +789,7 @@ requires same_signedness<LEFT,RIGHT>
     return static_cast<result_t>(
             static_cast<ult>(
                     promote_and_extend_to_unsigned<ult>(l)
-                    / // use unsigned op no overflow possible on division
+                    / // use unsigned op no overflow possible on division after initial checks
                     promote_and_extend_to_unsigned<ult>(r)
             )
     );
@@ -953,4 +969,4 @@ std::ostream& operator<<(std::ostream &out, a_safeint auto value){
 
 #undef ps_assert
 
-#endif /* SRC_PSSSAFEINT_ */
+#endif /* SRC_PSSSAFECHECKEDINT_ */
