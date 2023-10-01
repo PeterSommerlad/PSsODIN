@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(PSSafeCheckedIntTests)
+project(PSsODIN)
 
 
 set(CMAKE_CXX_STANDARD 20)
@@ -17,8 +17,6 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
 
 elseif (CMAKE_BUILD_TYPE MATCHES "Release")
   add_compile_definitions(NDEBUG)
-elseif (CMAKE_BUILD_TYPE MATCHES "Throw")
-  add_compile_definitions(PS_ASSERT_TRHOWS)
 else ()
   message("unsupported build type...")
 endif()
@@ -26,13 +24,13 @@ endif()
 
 file(GLOB SOURCES src/*.cpp)
 
-add_executable(PSSafeCheckedIntTests ${SOURCES} )
+add_executable(PSsODINTests ${SOURCES} )
 
-target_include_directories(PSSafeCheckedIntTests PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/cute)
+target_include_directories(PSsODINTests PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/cute)
 
 enable_testing()
 
-add_test(NAME test COMMAND PSSafeCheckedIntTests)
+add_test(NAME test COMMAND PSsODINTests)
 
 
 message("")
