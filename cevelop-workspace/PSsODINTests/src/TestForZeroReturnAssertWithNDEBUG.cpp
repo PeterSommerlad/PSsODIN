@@ -2,7 +2,7 @@
 #include "cute.h"
 
 // cannot #define NDEBUG here, because of ODR, must use consistently on all configs
-#include "psssafecheckedint.h"
+#include "pssodin.h"
     using namespace pssodin;
 
 void thisIsATestForZeroReturnAssertWithNDEBUGTest() {

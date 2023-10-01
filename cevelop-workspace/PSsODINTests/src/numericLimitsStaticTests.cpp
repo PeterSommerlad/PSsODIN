@@ -1,4 +1,4 @@
-#include "psssafecheckedint.h"
+#include "pssodin.h"
 
 // this file content is generated
 // it tests all numeric limits members of all integer replacement types against their corresponding underlying types

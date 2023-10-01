@@ -4,7 +4,8 @@
 
 #include <vector>
 #include <numeric>
-#include "psssafecheckedint.h"
+
+#include "pssodin.h"
 
 using namespace pssodin;
 

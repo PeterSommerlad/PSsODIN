@@ -1,7 +1,7 @@
 #include "NonBuiltInOverflowDetectionTests.h"
 #include "cute.h"
 
-#include "psssafecheckedint.h"
+#include "pssodin.h"
 
 using namespace pssodin::non_builtin;
 

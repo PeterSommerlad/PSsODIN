@@ -7,8 +7,8 @@
 #include <type_traits>
 #include <cstddef>
 #include "OverflowCheckedTests.h"
-#include "psssafecheckedint.h"
 #include "NonBuiltInOverflowDetectionTests.h"
+#include "pssodin.h"
 
 
 
@@ -716,7 +716,7 @@ check_does_compile(not,  si32, + std::numeric_limits<si32>::min() / -1_csi32  +)
 //static_assert(std::numeric_limits<si32>::min() / -1_csi32 == std::numeric_limits<si32>::min()); // wraps
 
 #ifdef __clang__
-// doesn't seem to work with gcc
+// doesn't seem to work with gcc, but with Apple clang, not sure which is more correct.
 int from_int(...); // cause non-matching code below to SFINAE
 
 
