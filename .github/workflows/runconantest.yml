@@ -21,4 +21,5 @@ jobs:
           CC:  gcc-10
           CXX: g++-10
         run: |
+          conan profile detect
           conan create . -s compiler.cppstd=20
