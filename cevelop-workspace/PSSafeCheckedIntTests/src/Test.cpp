@@ -715,7 +715,7 @@ check_does_compile(not,  si32, + std::numeric_limits<si32>::min() / -1_csi32  +)
 //static_assert(std::numeric_limits<si32>::min() / 1_csi32 == std::numeric_limits<si32>::min()); // wraps
 //static_assert(std::numeric_limits<si32>::min() / -1_csi32 == std::numeric_limits<si32>::min()); // wraps
 
-void from_int(...); // cause non-matching code below to SFINAE
+int from_int(...); // cause non-matching code below to SFINAE
 
 
 check_does_compile(not ,  si8, + from_int(' ')  +) // invalid conversion
