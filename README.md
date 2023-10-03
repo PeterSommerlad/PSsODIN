@@ -9,9 +9,9 @@
 
 ## Introduction
 
-A C++20 implementation of safe overflow detecting integers following MISRA C++ rules.
+A C++20 implementation of safe overflow detecting integers following MISRA C++ rules is on the main branch.
 
-An `#ifdef`ed C++17 implementation might become available in branch C++17.
+An `#ifdef`ed C++17 implementation is available in branch C++17.
 
 
 It provides the following types in `namspace pssodin` and corresponding UDL operators in `namespace pssodin::literals`:
