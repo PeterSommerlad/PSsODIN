@@ -948,11 +948,13 @@ check_does_compile(    ,  ui64, +  1_cui64 - 1_cui8  +) // same signedness
 #undef concat_line_impl
 #undef concat_line
 
-
 template<typename T, typename WHAT>
 constexpr bool
+#ifdef  __cpp_lib_remove_cvref
 isa = std::is_same_v<std::remove_cvref_t<T>,WHAT>;
-
+#else
+isa = std::is_same_v<pssodin::plain<T>,WHAT>;
+#endif
 
 template<typename T>
 constexpr bool

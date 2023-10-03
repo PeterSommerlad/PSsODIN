@@ -30,8 +30,6 @@
 #endif
 
 
-
-
 namespace pssodin { // Peter Sommerlad's simple Overflow Detecting Integral Numbers PSsODIN
 
 
@@ -40,6 +38,18 @@ enum class [[nodiscard]] ui8: std::uint8_t { pssodin_tag_to_prevent_mixing_other
 enum class [[nodiscard]]ui16: std::uint16_t{ pssodin_tag_to_prevent_mixing_other_enums };
 enum class [[nodiscard]]ui32: std::uint32_t{ pssodin_tag_to_prevent_mixing_other_enums };
 enum class [[nodiscard]]ui64: std::uint64_t{ pssodin_tag_to_prevent_mixing_other_enums };
+
+
+#ifndef __cpp_consteval
+    #ifdef __clang__
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wkeyword-macro"
+    #endif
+#define consteval constexpr
+    #ifdef __clang__
+        #pragma clang diagnostic pop
+    #endif
+#endif
 
 inline namespace literals {
 consteval
@@ -128,37 +138,47 @@ si64 operator""_csi64(unsigned long long val) {
         throw "integral constant too large"; // trigger compile-time error
     }
 }
+#ifndef __cpp_consteval
+#undef consteval
+#endif
 }
 
 
 
 
 template<typename T>
-using plain = std::remove_cvref_t<T>;
+using plain = std::remove_reference_t<std::remove_cv_t<T>>;
 
+#ifdef __cpp_concepts
 template<typename T>
 concept an_enum = std::is_enum_v<plain<T>>;
-
+#endif
 
 namespace detail_ {
 // from C++23
+#ifdef __cpp_concepts
 template<an_enum T>
+#else
+template<typename T, auto = std::enable_if_t<std::is_enum_v<plain<T>>,void*>{nullptr}>
+#endif
 constexpr bool
 is_scoped_enum_v = not std::is_convertible_v<T, std::underlying_type_t<T>>;
 
+#ifdef __cpp_concepts
 template<typename T>
 concept a_scoped_enum = is_scoped_enum_v<T>;
+#endif
 
 
 // detection concept
 
-template<typename T>
+template<typename T, typename = void>
 constexpr bool
 is_safeint_v = false;
 
-template<a_scoped_enum E>
+template<typename E>
 constexpr bool
-is_safeint_v<E> = requires { E{} == E::pssodin_tag_to_prevent_mixing_other_enums; } ;
+is_safeint_v<E,std::void_t<decltype( E{} == E::pssodin_tag_to_prevent_mixing_other_enums )>> = std::is_enum_v<E>  ;
 
 template<typename E>
 using ULT=std::conditional_t<std::is_enum_v<plain<E>>,std::underlying_type_t<plain<E>>,plain<E>>;
@@ -172,95 +192,122 @@ using promoted_t = // will promote keeping signedness
             , ULT<E>>;
 
 
-
-
-}
-
-
-template<typename E>
-concept a_safeint = detail_::is_safeint_v<E>;
-
-} // psssint
-
-
-// provide std::numeric_limits
-namespace std {
-
-
-
-template<pssodin::a_safeint type>
-  struct numeric_limits<type>
+template<typename type, std::enable_if_t<pssodin::detail_::is_safeint_v<type>,bool> = true>
+  struct numeric_limits
   {
     using ult = pssodin::detail_::ULT<type>;
     static constexpr bool is_specialized = true;
 
     static constexpr type
-    min() noexcept { return type{numeric_limits<ult>::min()}; }
+    min() noexcept { return type{std::numeric_limits<ult>::min()}; }
 
     static constexpr type
-    max() noexcept { return type{numeric_limits<ult>::max()}; }
+    max() noexcept { return type{std::numeric_limits<ult>::max()}; }
 
     static constexpr type
-    lowest() noexcept { return type{numeric_limits<ult>::lowest()}; }
+    lowest() noexcept { return type{std::numeric_limits<ult>::lowest()}; }
 
-    static constexpr int digits = numeric_limits<ult>::digits;
-    static constexpr int digits10 = numeric_limits<ult>::digits10;
-    static constexpr int max_digits10 = numeric_limits<ult>::max_digits10;
-    static constexpr bool is_signed = numeric_limits<ult>::is_signed;
-    static constexpr bool is_integer = numeric_limits<ult>::is_integer;
-    static constexpr bool is_exact = numeric_limits<ult>::is_exact;
-    static constexpr int radix = numeric_limits<ult>::radix;
-
-    static constexpr type
-    epsilon() noexcept {  return type{numeric_limits<ult>::epsilon()}; }
+    static constexpr int digits = std::numeric_limits<ult>::digits;
+    static constexpr int digits10 = std::numeric_limits<ult>::digits10;
+    static constexpr int max_digits10 = std::numeric_limits<ult>::max_digits10;
+    static constexpr bool is_signed = std::numeric_limits<ult>::is_signed;
+    static constexpr bool is_integer = std::numeric_limits<ult>::is_integer;
+    static constexpr bool is_exact = std::numeric_limits<ult>::is_exact;
+    static constexpr int radix = std::numeric_limits<ult>::radix;
 
     static constexpr type
-    round_error() noexcept {  return type{numeric_limits<ult>::round_error()}; }
-
-    static constexpr int min_exponent = numeric_limits<ult>::min_exponent;
-    static constexpr int min_exponent10 = numeric_limits<ult>::min_exponent10;
-    static constexpr int max_exponent = numeric_limits<ult>::max_exponent;
-    static constexpr int max_exponent10 = numeric_limits<ult>::max_exponent10;
-
-    static constexpr bool has_infinity = numeric_limits<ult>::has_infinity;
-    static constexpr bool has_quiet_NaN = numeric_limits<ult>::has_quiet_NaN;
-    static constexpr bool has_signaling_NaN = numeric_limits<ult>::has_signaling_NaN;
-    static constexpr float_denorm_style has_denorm
-     = numeric_limits<ult>::has_denorm;
-    static constexpr bool has_denorm_loss = numeric_limits<ult>::has_denorm_loss;
+    epsilon() noexcept {  return type{std::numeric_limits<ult>::epsilon()}; }
 
     static constexpr type
-    infinity() noexcept { return type{numeric_limits<ult>::infinity()}; }
+    round_error() noexcept {  return type{std::numeric_limits<ult>::round_error()}; }
+
+    static constexpr int min_exponent = std::numeric_limits<ult>::min_exponent;
+    static constexpr int min_exponent10 = std::numeric_limits<ult>::min_exponent10;
+    static constexpr int max_exponent = std::numeric_limits<ult>::max_exponent;
+    static constexpr int max_exponent10 = std::numeric_limits<ult>::max_exponent10;
+
+    static constexpr bool has_infinity = std::numeric_limits<ult>::has_infinity;
+    static constexpr bool has_quiet_NaN = std::numeric_limits<ult>::has_quiet_NaN;
+    static constexpr bool has_signaling_NaN = std::numeric_limits<ult>::has_signaling_NaN;
+    static constexpr std::float_denorm_style has_denorm
+     = std::numeric_limits<ult>::has_denorm;
+    static constexpr bool has_denorm_loss = std::numeric_limits<ult>::has_denorm_loss;
 
     static constexpr type
-    quiet_NaN() noexcept { return type{numeric_limits<ult>::quiet_NaN()}; }
+    infinity() noexcept { return type{std::numeric_limits<ult>::infinity()}; }
+
+    static constexpr type
+    quiet_NaN() noexcept { return type{std::numeric_limits<ult>::quiet_NaN()}; }
 
     static constexpr type
     signaling_NaN() noexcept
-    { return type{numeric_limits<ult>::signaling_NaN()}; }
+    { return type{std::numeric_limits<ult>::signaling_NaN()}; }
 
     static constexpr type
     denorm_min() noexcept
-    { return type{numeric_limits<ult>::denorm_min()}; }
+    { return type{std::numeric_limits<ult>::denorm_min()}; }
 
-    static constexpr bool is_iec559 =  numeric_limits<ult>::is_iec559;
-    static constexpr bool is_bounded =  numeric_limits<ult>::is_bounded;
+
+    static constexpr bool is_iec559 =  std::numeric_limits<ult>::is_iec559;
+    static constexpr bool is_bounded =  std::numeric_limits<ult>::is_bounded;
     static constexpr bool is_modulo =  true;
 
     static constexpr bool traps = false;
-    static constexpr bool tinyness_before =  numeric_limits<ult>::tinyness_before;
-    static constexpr float_round_style round_style =  numeric_limits<ult>::round_style;
+    static constexpr bool tinyness_before =  std::numeric_limits<ult>::tinyness_before;
+    static constexpr std::float_round_style round_style =  std::numeric_limits<ult>::round_style;
   };
 
 }
+
+
+
+
+#ifdef __cpp_concepts
+template<typename E>
+concept a_safeint = detail_::is_safeint_v<E>;
+#endif
+
+} // pssodin
+
+// provide std::numeric_limits
+namespace std {
+
+template<>
+struct numeric_limits<pssodin::si8>: pssodin::detail_::numeric_limits<pssodin::si8>{};
+template<>
+struct numeric_limits<pssodin::si16>: pssodin::detail_::numeric_limits<pssodin::si16>{};
+template<>
+struct numeric_limits<pssodin::si32>: pssodin::detail_::numeric_limits<pssodin::si32>{};
+template<>
+struct numeric_limits<pssodin::si64>: pssodin::detail_::numeric_limits<pssodin::si64>{};
+template<>
+struct numeric_limits<pssodin::ui8>: pssodin::detail_::numeric_limits<pssodin::ui8>{};
+template<>
+struct numeric_limits<pssodin::ui16>: pssodin::detail_::numeric_limits<pssodin::ui16>{};
+template<>
+struct numeric_limits<pssodin::ui32>: pssodin::detail_::numeric_limits<pssodin::ui32>{};
+template<>
+struct numeric_limits<pssodin::ui64>: pssodin::detail_::numeric_limits<pssodin::ui64>{};
+
+
+
+}
+
+// provide std::numeric_limits
 
 namespace pssodin{
 
 namespace detail_{
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT>
+#endif
 constexpr bool
-same_signedness_v = std::numeric_limits<LEFT>::is_signed == std::numeric_limits<RIGHT>::is_signed;
+same_signedness_v = detail_::is_safeint_v<LEFT> && detail_::is_safeint_v<RIGHT> && std::numeric_limits<LEFT>::is_signed == std::numeric_limits<RIGHT>::is_signed;
+// some redundancy when concepts are enabled
+
 
 template<typename CHAR>
 constexpr bool
@@ -297,38 +344,64 @@ is_known_integer_v =    is_compatible_integer_v<std::uint8_t,  TESTED>
 
 }
 
+#ifdef __cpp_concepts
 template<typename LEFT, typename RIGHT>
 concept same_signedness = detail_::same_signedness_v<LEFT,RIGHT>;
+#endif
 
+
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template <typename E>
+#endif
 [[nodiscard]]
 constexpr auto
 promote_keep_signedness(E val) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_safeint_v<E>,detail_::promoted_t<E>>
+#endif
 { // promote keeping signedness
     return static_cast<detail_::promoted_t<E>>(val);// promote with sign extension
 }
 
 // not used in framework:
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template <typename E>
+#endif
 [[nodiscard]]
 constexpr auto
 to_underlying(E val) noexcept 
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_safeint_v<E>,std::underlying_type_t<E>>
+#endif
 { // plain value with all bad properties
     return static_cast<std::underlying_type_t<E>>(val);
 }
 
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template <typename E>
+#endif
 [[nodiscard]]
 constexpr auto
 promote_to_unsigned(E val) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_safeint_v<E>,std::make_unsigned_t<detail_::promoted_t<E>>>
+#endif
 { // promote to unsigned for wrap around arithmetic
     using u_result_t = std::make_unsigned_t<detail_::promoted_t<E>>;
     return static_cast<u_result_t>(promote_keep_signedness(val));
 }
 
 // deliberately not std::integral, because of bool and characters!
+#ifdef __cpp_concepts
 template<typename T>
 concept an_integer = detail_::is_known_integer_v<T>;
+#endif
 
 #ifdef __has_builtin
 #if __has_builtin(__builtin_add_overflow)
@@ -341,9 +414,19 @@ concept an_integer = detail_::is_known_integer_v<T>;
 
 namespace non_builtin {
 // like built-ins __builtin_add_overflow return true on overflow
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool non_builtin_add_overflow(T l, T r, T* result) noexcept {
+constexpr auto non_builtin_add_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     if constexpr (std::numeric_limits<T>::is_signed){
         if constexpr(sizeof(T) == sizeof(std::int64_t)){
             *result = static_cast<T>(static_cast<uint64_t>(l) + static_cast<uint64_t>(r));
@@ -371,9 +454,19 @@ constexpr bool non_builtin_add_overflow(T l, T r, T* result) noexcept {
     }
     return true;
 }
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool non_builtin_sub_overflow(T l, T r, T* result) noexcept {
+constexpr auto non_builtin_sub_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     if constexpr (std::numeric_limits<T>::is_signed){
         if constexpr(sizeof(T) == sizeof(std::int64_t)){
             *result = static_cast<T>(static_cast<uint64_t>(l) - static_cast<uint64_t>(r));
@@ -401,9 +494,19 @@ constexpr bool non_builtin_sub_overflow(T l, T r, T* result) noexcept {
     }
     return true;
 }
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
+constexpr auto non_builtin_mul_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     if constexpr (std::numeric_limits<T>::is_signed){
         if constexpr(sizeof(T) == sizeof(std::int64_t)){
             bool resultnegative { (l < 0) != (r < 0) };
@@ -455,36 +558,96 @@ constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
 } // namespace non_builtin
 
 #ifdef HAVE_GCC_OVERFLOW_CHECKING
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool add_overflow(T l, T r, T* result) noexcept {
+constexpr auto add_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     return __builtin_add_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool sub_overflow(T l, T r, T* result) noexcept {
+constexpr auto sub_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     return __builtin_sub_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool mul_overflow(T l, T r, T* result) noexcept {
+constexpr auto mul_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     return __builtin_mul_overflow(l,r,result);
 }
 
 #else // DIY
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool add_overflow(T l, T r, T* result) noexcept {
+constexpr auto add_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     return non_builtin::non_builtin_add_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool sub_overflow(T l, T r, T* result) noexcept {
+constexpr auto sub_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     return non_builtin::non_builtin_sub_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template <typename T>
+#endif
 [[nodiscard]]
-constexpr bool mul_overflow(T l, T r, T* result) noexcept {
+constexpr auto mul_overflow(T l, T r, T* result) noexcept
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_known_integer_v<T>,bool>
+#else
+-> bool
+#endif
+{
     return non_builtin::non_builtin_mul_overflow(l,r,result);
 }
 
@@ -492,7 +655,11 @@ constexpr bool mul_overflow(T l, T r, T* result) noexcept {
 
 
 
+#ifdef __cpp_concepts
 template<an_integer TARGET, a_safeint E>
+#else
+template<typename TARGET, typename E,std::enable_if_t<detail_::is_known_integer_v<TARGET> && detail_::is_safeint_v<E>,bool> = false >
+#endif
 [[nodiscard]]
 constexpr auto
 promote_and_extend_to_unsigned(E val) noexcept
@@ -502,11 +669,17 @@ promote_and_extend_to_unsigned(E val) noexcept
        using s_result_t = std::make_signed_t<u_result_t>;
        return static_cast<u_result_t>(static_cast<s_result_t>(promote_keep_signedness(val)));// promote with sign extension
 }
+#ifdef __cpp_concepts
 template<an_integer TARGET, a_safeint E>
+#else
+template<typename TARGET, typename E,std::enable_if_t<detail_::is_known_integer_v<TARGET> && detail_::is_safeint_v<E> && std::numeric_limits<TARGET>::is_signed,bool> = false >
+#endif
 [[nodiscard]]
 constexpr auto
 abs_promoted_and_extended_as_unsigned(E val) noexcept
+#ifdef __cpp_concepts
  requires (std::numeric_limits<TARGET>::is_signed)
+#endif
 { // promote to unsigned for wrap around arithmetic removing sign if negative
   // return just the bits for std::numeric_limits<TARGET>::min()
        using promoted_t = detail_::promoted_t<E>;
@@ -527,7 +700,11 @@ abs_promoted_and_extended_as_unsigned(E val) noexcept
 
 
 
+#ifdef __cpp_concepts
 template<an_integer T>
+#else
+template<typename T, std::enable_if_t<detail_::is_known_integer_v<T>,bool> = false >
+#endif
 [[nodiscard]]
 constexpr auto
 from_int(T val) noexcept {
@@ -546,10 +723,21 @@ from_int(T val) noexcept {
     return static_cast<result_t>(val); // no need to check, result_t corresponds to input T's range
 }
 // path tests are compile-time checked:
+#ifdef __cpp_concepts
 template<a_safeint TO, an_integer FROM>
+#else
+template<typename TO, typename FROM,
+std::enable_if_t<detail_::is_safeint_v<TO>,bool> = false
+>
+#endif
 [[nodiscard]]
 constexpr auto
 from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
+-> TO
+#else
+-> std::enable_if_t<detail_::is_known_integer_v<FROM>,TO>
+#endif
 {
 #pragma GCC diagnostic push
 #if defined(__GNUG__)
@@ -585,10 +773,20 @@ from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
 
 
 // negation for signed types only, two's complement
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template<typename E,
+std::enable_if_t<
+  detail_::is_safeint_v<E>
+  && std::numeric_limits<E>::is_signed
+,bool> = true>
+#endif
 constexpr E
 operator-(E l) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires std::numeric_limits<E>::is_signed
+#endif
 {
 #pragma GCC diagnostic push
 #if defined(__GNUG__)
@@ -607,14 +805,22 @@ requires std::numeric_limits<E>::is_signed
 
 // increment/decrement
 
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template<typename E, std::enable_if_t<detail_::is_safeint_v<E>,bool> = true>
+#endif
 constexpr E&
 operator++(E& l) NOEXCEPT_WITH_THROWING_ASSERTS
 {
     return l = static_cast<E>(1) + l;
 }
 
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template<typename E, std::enable_if_t<detail_::is_safeint_v<E>,bool> = true>
+#endif
 constexpr E
 operator++(E& l, int) NOEXCEPT_WITH_THROWING_ASSERTS
 {
@@ -622,14 +828,22 @@ operator++(E& l, int) NOEXCEPT_WITH_THROWING_ASSERTS
     ++l;
     return result;
 }
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template<typename E, std::enable_if_t<detail_::is_safeint_v<E>,bool> = true>
+#endif
 constexpr E&
 operator--(E& l) NOEXCEPT_WITH_THROWING_ASSERTS
 {
     return l = l - static_cast<E>(1);
 }
 
+#ifdef __cpp_concepts
 template<a_safeint E>
+#else
+template<typename E, std::enable_if_t<detail_::is_safeint_v<E>,bool> = true>
+#endif
 constexpr E
 operator--(E& l, int) NOEXCEPT_WITH_THROWING_ASSERTS
 {
@@ -645,10 +859,21 @@ operator--(E& l, int) NOEXCEPT_WITH_THROWING_ASSERTS
 //// TODO: continue compile time tests for operators below
 
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
 constexpr auto
 operator+(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     // need to handle sign extension
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
@@ -671,20 +896,44 @@ requires same_signedness<LEFT,RIGHT>
 }
 
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator+=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"pssodin: adding too large integer type");
     l = static_cast<LEFT>(l+r);
     return l;
 }
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
+
 constexpr auto
 operator-(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = detail_::ULT<result_t>;
@@ -705,10 +954,23 @@ requires same_signedness<LEFT,RIGHT>
     }
     return static_cast<result_t>(result);
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator-=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
+
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"subtracting too large integer type");
     l = static_cast<LEFT>(l-r);
@@ -716,10 +978,23 @@ requires same_signedness<LEFT,RIGHT>
 }
 
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
+
 constexpr auto
 operator*(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
+
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = detail_::ULT<result_t>;
@@ -739,19 +1014,45 @@ requires same_signedness<LEFT,RIGHT>
      }
     return static_cast<result_t>(result);
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator*=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
+
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"multiplying too large integer type");
     l = static_cast<LEFT>(l*r);
     return l;
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
+
 constexpr auto
 operator/(LEFT const l, RIGHT const r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
+
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = detail_::ULT<result_t>;
@@ -793,19 +1094,44 @@ requires same_signedness<LEFT,RIGHT>
     }
 
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator/=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
+
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"dividing by too large integer type");
     l = static_cast<LEFT>(l/r);
     return l;
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
 constexpr auto
 operator%(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = detail_::ULT<result_t>;
@@ -828,10 +1154,23 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
             )
     );
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator%=(LEFT &l, RIGHT r) noexcept
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"dividing by too large integer type");
     l = static_cast<LEFT>(l%r);
@@ -840,73 +1179,171 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
 
 // bitwise operators
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
 constexpr auto
 operator&(LEFT l, RIGHT r) noexcept
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)&promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
 constexpr auto&
 operator&=(LEFT &l, RIGHT r) noexcept
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     static_assert(sizeof(LEFT) == sizeof(RIGHT),"bitand by different sized integer type");
     l = static_cast<LEFT>(l&r);
     return l;
 }
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
 constexpr auto
 operator|(LEFT l, RIGHT r) noexcept
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)|promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator|=(LEFT &l, RIGHT r) noexcept
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     static_assert(sizeof(LEFT) == sizeof(RIGHT),"bitor by different sized integer type");
     l = static_cast<LEFT>(l|r);
     return l;
 }
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
+
 constexpr auto
 operator^(LEFT l, RIGHT r) noexcept
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)^promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator^=(LEFT &l, RIGHT r) noexcept
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     static_assert(sizeof(LEFT) == sizeof(RIGHT),"xor by different sized integer type");
     l = static_cast<LEFT>(l^r);
     return l;
 }
 
-template<a_safeint LEFT>
-constexpr LEFT
-operator~(LEFT l) noexcept
-requires std::is_unsigned_v<detail_::ULT<LEFT>>
+#ifdef __cpp_concepts
+template<a_safeint E>
+#else
+template<typename E,
+std::enable_if_t<
+  detail_::is_safeint_v<E>
+  && std::is_unsigned_v<detail_::ULT<E>>
+,bool> = true>
+#endif
+constexpr E
+operator~(E l) noexcept
+#ifdef __cpp_concepts
+requires std::is_unsigned_v<detail_::ULT<E>>
+#endif
 {
-    return static_cast<LEFT>(~promote_keep_signedness(l));
+    return static_cast<E>(~promote_keep_signedness(l));
 }
 
 
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
+
 constexpr LEFT
 operator<<(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
 #pragma GCC diagnostic push
 #if defined(__GNUG__)
@@ -921,18 +1358,44 @@ requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::U
 #pragma GCC diagnostic pop
     return static_cast<LEFT>(promote_keep_signedness(l)<<promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
+
 constexpr auto&
 operator<<=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     l = (l<<r);
     return l;
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
+
 constexpr LEFT
 operator>>(LEFT l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
 #pragma GCC diagnostic push
 #if defined(__GNUG__)
@@ -947,17 +1410,36 @@ requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::U
 #pragma GCC diagnostic pop
     return static_cast<LEFT>(promote_keep_signedness(l)>>promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<a_safeint LEFT, a_safeint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+std::enable_if_t<
+  detail_::is_safeint_v<LEFT>
+  && detail_::is_safeint_v<RIGHT>
+  && detail_::same_signedness_v<LEFT,RIGHT>
+  && std::is_unsigned_v<detail_::ULT<LEFT>>
+,bool> = true>
+#endif
 constexpr auto&
 operator>>=(LEFT &l, RIGHT r) NOEXCEPT_WITH_THROWING_ASSERTS
-requires std::is_unsigned_v<detail_::ULT<LEFT>> && std::is_unsigned_v<detail_::ULT<RIGHT>>
+#ifdef __cpp_concepts
+requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<detail_::ULT<LEFT>>
+#endif
 {
     l = (l>>r);
     return l;
 }
 
-
-std::ostream& operator<<(std::ostream &out, a_safeint auto value){
+#ifdef __cpp_concepts
+template<a_safeint E>
+#else
+template<typename E,
+std::enable_if_t<
+  detail_::is_safeint_v<E>
+,bool> = true>
+#endif
+std::ostream& operator<<(std::ostream &out, E value){
     out << promote_keep_signedness(value);
     return out;
 }
