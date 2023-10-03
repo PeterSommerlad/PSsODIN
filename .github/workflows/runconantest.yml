@@ -22,4 +22,4 @@ jobs:
           CXX: g++-10
         run: |
           conan profile detect
-          conan create . -s compiler.cppstd=20
+          conan create . -s compiler.cppstd=17
