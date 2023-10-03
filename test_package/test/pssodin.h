@@ -260,7 +260,7 @@ namespace detail_{
 
 template<a_safeint LEFT, a_safeint RIGHT>
 constexpr bool
-same_signedness_v = detail_::is_safeint_v<LEFT> && detail_::is_safeint_v<RIGHT> && std::numeric_limits<LEFT>::is_signed == std::numeric_limits<RIGHT>::is_signed;
+same_signedness_v = std::numeric_limits<LEFT>::is_signed == std::numeric_limits<RIGHT>::is_signed;
 
 template<typename CHAR>
 constexpr bool
@@ -586,7 +586,6 @@ from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
 
 // negation for signed types only, two's complement
 template<a_safeint E>
-[[nodiscard]]
 constexpr E
 operator-(E l) NOEXCEPT_WITH_THROWING_ASSERTS
 requires std::numeric_limits<E>::is_signed
