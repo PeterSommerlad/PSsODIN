@@ -68,14 +68,14 @@ static_assert(42_cui32 == from_int(42u));
 
 
 
-static_assert(detail_::is_safeint_v<ui8>);
-static_assert(detail_::is_safeint_v<ui16>);
-static_assert(detail_::is_safeint_v<ui32>);
-static_assert(detail_::is_safeint_v<ui64>);
-static_assert(detail_::is_safeint_v<si8>);
-static_assert(detail_::is_safeint_v<si16>);
-static_assert(detail_::is_safeint_v<si32>);
-static_assert(detail_::is_safeint_v<si64>);
+static_assert(detail_::is_safeint_v<cui8>);
+static_assert(detail_::is_safeint_v<cui16>);
+static_assert(detail_::is_safeint_v<cui32>);
+static_assert(detail_::is_safeint_v<cui64>);
+static_assert(detail_::is_safeint_v<csi8>);
+static_assert(detail_::is_safeint_v<csi16>);
+static_assert(detail_::is_safeint_v<csi32>);
+static_assert(detail_::is_safeint_v<csi64>);
 enum class enum4test{};
 static_assert(!detail_::is_safeint_v<enum4test>);
 static_assert(!detail_::is_safeint_v<std::byte>);
@@ -84,8 +84,8 @@ static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(1_cui8)+1
 static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(2_cui16)+1)>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(1_csi8))>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(2_csi16))>);
-static_assert(std::is_same_v<uint8_t,std::underlying_type_t<ui8>>);
-static_assert(std::is_same_v<uint16_t,std::underlying_type_t<ui16>>);
+static_assert(std::is_same_v<uint8_t,std::underlying_type_t<cui8>>);
+static_assert(std::is_same_v<uint16_t,std::underlying_type_t<cui16>>);
 
 
 //static_assert(promote_keep_signedness(0xffff_cui16 * 0xffff_cui16) == 0x1u); // wraps
@@ -103,7 +103,7 @@ static_assert(std::is_same_v<int,decltype(+to_underlying(42_cui8))>);
 static_assert(std::is_same_v<uint8_t,decltype(to_underlying(42_cui8))>);
 
 static_assert(1_cui8 == from_int(uint8_t(1)));
-static_assert(42_csi8 == from_int_to<si8>(42));
+static_assert(42_csi8 == from_int_to<csi8>(42));
 //static_assert(32_cui8 == from_int(' ')); // does not compile
 //static_assert(32_cui8 == from_int(u' ')); // does not compile
 //static_assert(32_cui8 == from_int(U' ')); // does not compile
@@ -127,20 +127,20 @@ constexpr auto vminus1_32 { -1_csi32 };
 constexpr auto vminus1_16 { -1_csi16 };
 constexpr auto vminus1_8  { -1_csi8 };
 
-constexpr auto min_8  { std::numeric_limits<si8 >::min() };
-constexpr auto min_16 { std::numeric_limits<si16>::min() };
-constexpr auto min_32 { std::numeric_limits<si32>::min() };
-constexpr auto min_64 { std::numeric_limits<si64>::min() };
-constexpr auto max_8  { std::numeric_limits<si8 >::max() };
-constexpr auto max_16 { std::numeric_limits<si16>::max() };
-constexpr auto max_32 { std::numeric_limits<si32>::max() };
-constexpr auto max_64 { std::numeric_limits<si64>::max() };
+constexpr auto min_8  { std::numeric_limits<csi8 >::min() };
+constexpr auto min_16 { std::numeric_limits<csi16>::min() };
+constexpr auto min_32 { std::numeric_limits<csi32>::min() };
+constexpr auto min_64 { std::numeric_limits<csi64>::min() };
+constexpr auto max_8  { std::numeric_limits<csi8 >::max() };
+constexpr auto max_16 { std::numeric_limits<csi16>::max() };
+constexpr auto max_32 { std::numeric_limits<csi32>::max() };
+constexpr auto max_64 { std::numeric_limits<csi64>::max() };
 
 
-constexpr auto maxu_8  { std::numeric_limits<ui8 >::max() };
-constexpr auto maxu_16 { std::numeric_limits<ui16>::max() };
-constexpr auto maxu_32 { std::numeric_limits<ui32>::max() };
-constexpr auto maxu_64 { std::numeric_limits<ui64>::max() };
+constexpr auto maxu_8  { std::numeric_limits<cui8 >::max() };
+constexpr auto maxu_16 { std::numeric_limits<cui16>::max() };
+constexpr auto maxu_32 { std::numeric_limits<cui32>::max() };
+constexpr auto maxu_64 { std::numeric_limits<cui64>::max() };
 constexpr auto v1u_64 {  1_cui64 };
 constexpr auto v1u_32 {  1_cui32 };
 constexpr auto v1u_16 {  1_cui16 };
@@ -533,146 +533,146 @@ static_assert(NOT expression_compiles<FROM>, "should " #NOT " compile: " #FROM "
 
 
 // need to be on separate lines for disambiguation
-check_does_compile(not,  si8 , <<  )
-check_does_compile(   ,  ui8 , << )
-check_does_compile(not,  si8 , >>  )
-check_does_compile(   ,  ui8 , >> )
-check_does_compile(not,  ui8 , + (1_cui8 << 010_cui8) + ) // too wide shift
-check_does_compile(   ,  ui8 , + (1_cui8 << 7_cui8) + ) // not too wide shift
-check_does_compile(not,  ui8 , + (0x80_cui8 >> 010_cui8) + ) // too wide shift
-check_does_compile(   ,  ui8 , + (0x80_cui8 >> 7_cui8) + ) // not too wide shift
-check_does_compile(not,  ui8 ,  % ) // modulo 0
-check_does_compile(not,  si8 ,  / ) // div 0
-check_does_compile(not,  si8 ,  % ) // modulo not working
-check_does_compile(not,  ui8 ,  / ) // div 0
-check_does_compile(   ,  ui8 , +( 1_cui8  / 1_cui8)+ ) // div
-check_does_compile(   ,  ui8 , +( 11_cui8  % 3_cui8)+ ) // mod
-check_does_compile(not,  ui8 , + 1_csi8 + ) // mixed
-check_does_compile(not,  ui8 , + 255_cui8 + 1_cui8 + ) // overflow detect
-check_does_compile(not,  ui8 , + 128_cui8 * 128_cui8 +) // overflow detect
-check_does_compile(not,  si8 , + 64_csi8 * 2_csi8 +) // overflow detect
-check_does_compile(not,  si8 , + (-127_csi8 - 1_csi8) * -1_csi8 +) // overflow detect
-check_does_compile(   ,  si8 , + (-127_csi8 - 1_csi8) * 1_csi8 +) // no overflow
-check_does_compile(not,  si8 , + (-127_csi8 - 1_csi8) / -1_csi8 +) // overflow detect
-check_does_compile(   ,  si8 , + (-127_csi8 - 1_csi8) / 1_csi8 +) // no overflow
+check_does_compile(not,  csi8 , <<  )
+check_does_compile(   ,  cui8 , << )
+check_does_compile(not,  csi8 , >>  )
+check_does_compile(   ,  cui8 , >> )
+check_does_compile(not,  cui8 , + (1_cui8 << 010_cui8) + ) // too wide shift
+check_does_compile(   ,  cui8 , + (1_cui8 << 7_cui8) + ) // not too wide shift
+check_does_compile(not,  cui8 , + (0x80_cui8 >> 010_cui8) + ) // too wide shift
+check_does_compile(   ,  cui8 , + (0x80_cui8 >> 7_cui8) + ) // not too wide shift
+check_does_compile(not,  cui8 ,  % ) // modulo 0
+check_does_compile(not,  csi8 ,  / ) // div 0
+check_does_compile(not,  csi8 ,  % ) // modulo not working
+check_does_compile(not,  cui8 ,  / ) // div 0
+check_does_compile(   ,  cui8 , +( 1_cui8  / 1_cui8)+ ) // div
+check_does_compile(   ,  cui8 , +( 11_cui8  % 3_cui8)+ ) // mod
+check_does_compile(not,  cui8 , + 1_csi8 + ) // mixed
+check_does_compile(not,  cui8 , + 255_cui8 + 1_cui8 + ) // overflow detect
+check_does_compile(not,  cui8 , + 128_cui8 * 128_cui8 +) // overflow detect
+check_does_compile(not,  csi8 , + 64_csi8 * 2_csi8 +) // overflow detect
+check_does_compile(not,  csi8 , + (-127_csi8 - 1_csi8) * -1_csi8 +) // overflow detect
+check_does_compile(   ,  csi8 , + (-127_csi8 - 1_csi8) * 1_csi8 +) // no overflow
+check_does_compile(not,  csi8 , + (-127_csi8 - 1_csi8) / -1_csi8 +) // overflow detect
+check_does_compile(   ,  csi8 , + (-127_csi8 - 1_csi8) / 1_csi8 +) // no overflow
 
 // demonstrate overflow detection:
-check_does_compile(not,  si64 , + max_64 + v1_64 +) //  overflow detect
-check_does_compile(not,  si64 , + max_64 + v1_32 +) //  overflow detect
-check_does_compile(not,  si64 , + max_64 + v1_16 +) //  overflow detect
-check_does_compile(not,  si64 , + max_64 + v1_8 +) //  overflow detect
+check_does_compile(not,  csi64 , + max_64 + v1_64 +) //  overflow detect
+check_does_compile(not,  csi64 , + max_64 + v1_32 +) //  overflow detect
+check_does_compile(not,  csi64 , + max_64 + v1_16 +) //  overflow detect
+check_does_compile(not,  csi64 , + max_64 + v1_8 +) //  overflow detect
 static_assert(max_32 + v1_64 == 0x8000'0000_csi64 );
-check_does_compile(not,  si32 , + max_32 + v1_32 +) //  overflow detect
-check_does_compile(not,  si32 , + max_32 + v1_16 +) //  overflow detect
-check_does_compile(not,  si32 , + max_32 + v1_8 +) //  overflow detect
+check_does_compile(not,  csi32 , + max_32 + v1_32 +) //  overflow detect
+check_does_compile(not,  csi32 , + max_32 + v1_16 +) //  overflow detect
+check_does_compile(not,  csi32 , + max_32 + v1_8 +) //  overflow detect
 static_assert(max_16 + v1_64 == 0x8000_csi64 );
 static_assert(max_16 + v1_32 == 0x8000_csi32 );
-check_does_compile(not,  si16 , + max_16 + v1_16 +) //  overflow detect
-check_does_compile(not,  si16 , + max_16 + v1_8 +) //  overflow detect
+check_does_compile(not,  csi16 , + max_16 + v1_16 +) //  overflow detect
+check_does_compile(not,  csi16 , + max_16 + v1_8 +) //  overflow detect
 static_assert(max_8  + v1_64 == 128_csi64 );
 static_assert(max_8  + v1_32 == 128_csi32 );
 static_assert(max_8  + v1_16 == 128_csi16 );
-check_does_compile(not,  si8 , + max_8 + v1_8 +) //  overflow detect
+check_does_compile(not,  csi8 , + max_8 + v1_8 +) //  overflow detect
 
 // unsigned addition overflow detection:
-check_does_compile(not,  ui64 , + maxu_64 + v1u_64 +) //  overflow detect
-check_does_compile(not,  ui64 , + maxu_64 + v1u_32 +) //  overflow detect
-check_does_compile(not,  ui64 , + maxu_64 + v1u_16 +) //  overflow detect
-check_does_compile(not,  ui64 , + maxu_64 + v1u_8 +) //  overflow detect
+check_does_compile(not,  cui64 , + maxu_64 + v1u_64 +) //  overflow detect
+check_does_compile(not,  cui64 , + maxu_64 + v1u_32 +) //  overflow detect
+check_does_compile(not,  cui64 , + maxu_64 + v1u_16 +) //  overflow detect
+check_does_compile(not,  cui64 , + maxu_64 + v1u_8 +) //  overflow detect
 static_assert(maxu_32 + v1u_64 == 0x1'0000'0000_cui64 );
-check_does_compile(not,  ui32 , + maxu_32 + v1u_32 +) //  overflow detect
-check_does_compile(not,  ui32 , + maxu_32 + v1u_16 +) //  overflow detect
-check_does_compile(not,  ui32 , + maxu_32 + v1u_8 +) //  overflow detect
+check_does_compile(not,  cui32 , + maxu_32 + v1u_32 +) //  overflow detect
+check_does_compile(not,  cui32 , + maxu_32 + v1u_16 +) //  overflow detect
+check_does_compile(not,  cui32 , + maxu_32 + v1u_8 +) //  overflow detect
 static_assert(maxu_16 + v1u_64 == 0x1'0000_cui64 );
 static_assert(maxu_16 + v1u_32 == 0x1'0000_cui32 );
-check_does_compile(not,  ui16 , + maxu_16 + v1u_16 +) //  overflow detect
-check_does_compile(not,  ui16 , + maxu_16 + v1u_8 +) //  overflow detect
+check_does_compile(not,  cui16 , + maxu_16 + v1u_16 +) //  overflow detect
+check_does_compile(not,  cui16 , + maxu_16 + v1u_8 +) //  overflow detect
 static_assert(maxu_8  + v1u_64 == 256_cui64 );
 static_assert(maxu_8  + v1u_32 == 256_cui32 );
 static_assert(maxu_8  + v1u_16 == 256_cui16 );
-check_does_compile(not,  ui8 , + maxu_8 + v1u_8 +) //  overflow detect
+check_does_compile(not,  cui8 , + maxu_8 + v1u_8 +) //  overflow detect
 
 // unsigned subtraction underflow detection:
-check_does_compile(not,  ui64 , + 0_cui64 - v1u_64 +) //  overflow detect
-check_does_compile(not,  ui64 , + 0_cui64  - v1u_32 +) //  overflow detect
-check_does_compile(not,  ui64 , + 0_cui64  - v1u_16 +) //  overflow detect
-check_does_compile(not,  ui64 , + 0_cui64  - v1u_8 +) //  overflow detect
-check_does_compile(not,  ui32 , + 0_cui32 - v1u_64 +) //  overflow detect
-check_does_compile(not,  ui32 , + 0_cui32 - v1u_32 +) //  overflow detect
-check_does_compile(not,  ui32 , + 0_cui32 - v1u_16 +) //  overflow detect
-check_does_compile(not,  ui32 , + 0_cui32 - v1u_8 +) //  overflow detect
-check_does_compile(not,  ui16 , + 0_cui16 - v1u_16 +) //  overflow detect
-check_does_compile(not,  ui16 , + 0_cui16 - v1u_16 +) //  overflow detect
-check_does_compile(not,  ui16 , + 0_cui16 - v1u_16 +) //  overflow detect
-check_does_compile(not,  ui16 , + 0_cui16 - v1u_8 +) //  overflow detect
-check_does_compile(not,  ui8 , + 0_cui8 - v1u_64 +) //  overflow detect
-check_does_compile(not,  ui8 , + 0_cui8 - v1u_32 +) //  overflow detect
-check_does_compile(not,  ui8 , + 0_cui8 - v1u_16 +) //  overflow detect
-check_does_compile(not,  ui8 , + 0_cui8 - v1u_8  +) //  overflow detect
+check_does_compile(not,  cui64 , + 0_cui64 - v1u_64 +) //  overflow detect
+check_does_compile(not,  cui64 , + 0_cui64  - v1u_32 +) //  overflow detect
+check_does_compile(not,  cui64 , + 0_cui64  - v1u_16 +) //  overflow detect
+check_does_compile(not,  cui64 , + 0_cui64  - v1u_8 +) //  overflow detect
+check_does_compile(not,  cui32 , + 0_cui32 - v1u_64 +) //  overflow detect
+check_does_compile(not,  cui32 , + 0_cui32 - v1u_32 +) //  overflow detect
+check_does_compile(not,  cui32 , + 0_cui32 - v1u_16 +) //  overflow detect
+check_does_compile(not,  cui32 , + 0_cui32 - v1u_8 +) //  overflow detect
+check_does_compile(not,  cui16 , + 0_cui16 - v1u_16 +) //  overflow detect
+check_does_compile(not,  cui16 , + 0_cui16 - v1u_16 +) //  overflow detect
+check_does_compile(not,  cui16 , + 0_cui16 - v1u_16 +) //  overflow detect
+check_does_compile(not,  cui16 , + 0_cui16 - v1u_8 +) //  overflow detect
+check_does_compile(not,  cui8 , + 0_cui8 - v1u_64 +) //  overflow detect
+check_does_compile(not,  cui8 , + 0_cui8 - v1u_32 +) //  overflow detect
+check_does_compile(not,  cui8 , + 0_cui8 - v1u_16 +) //  overflow detect
+check_does_compile(not,  cui8 , + 0_cui8 - v1u_8  +) //  overflow detect
 
 
 // demonstrate overflow detection:
-check_does_compile(not,  si64 , + min_64 / vminus1_64 +) // overflow detect
-check_does_compile(not,  si64 , + min_64 / vminus1_32 +) // overflow detect
-check_does_compile(not,  si64 , + min_64 / vminus1_16 +) // overflow detect
-check_does_compile(not,  si64 , + min_64 / vminus1_8 +) // overflow detect
-check_does_compile(   ,  si64 , + min_32 / vminus1_64 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 / vminus1_64 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 / vminus1_32 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 / vminus1_16 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 / vminus1_8 +) // overflow detect
+check_does_compile(   ,  csi64 , + min_32 / vminus1_64 +) // overflow detect
 static_assert(min_32 / vminus1_64 == 0x8000'0000_csi64 );
-check_does_compile(not,  si32 , + min_32 / vminus1_32 +) // overflow detect
-check_does_compile(not,  si32 , + min_32 / vminus1_16 +) // overflow detect
-check_does_compile(not,  si32 , + min_32 / vminus1_8 +) // overflow detect
-static_assert(min_16 / vminus1_64 == -static_cast<si64>(min_16)  );
+check_does_compile(not,  csi32 , + min_32 / vminus1_32 +) // overflow detect
+check_does_compile(not,  csi32 , + min_32 / vminus1_16 +) // overflow detect
+check_does_compile(not,  csi32 , + min_32 / vminus1_8 +) // overflow detect
+static_assert(min_16 / vminus1_64 == -static_cast<csi64>(min_16)  );
 static_assert(min_16 / vminus1_32 == 0x8000_csi32 );
-check_does_compile(not,  si16 , + min_16 / vminus1_16 +) // overflow detect
-check_does_compile(not,  si16 , + min_16 / vminus1_8 +) // overflow detect
+check_does_compile(not,  csi16 , + min_16 / vminus1_16 +) // overflow detect
+check_does_compile(not,  csi16 , + min_16 / vminus1_8 +) // overflow detect
 static_assert(min_8  / vminus1_64 == 128_csi64 );
 static_assert(min_8  / vminus1_32 == 128_csi32 );
 static_assert(min_8  / vminus1_16 == 128_csi16 );
-check_does_compile(not,  si8 , + min_8 / vminus1_8 +) // overflow detect
+check_does_compile(not,  csi8 , + min_8 / vminus1_8 +) // overflow detect
 
 // demonstrate modulo overflow detection:%
 // not needed, only supported for unsigned operands
 
 
 // demonstrate multiplication overflow detection:
-check_does_compile(not,  si64 , + min_64 * v2_64 +) // overflow detect
-check_does_compile(not,  si64 , + min_64 * v2_32 +) // overflow detect
-check_does_compile(not,  si64 , + min_64 * v2_16 +) // overflow detect
-check_does_compile(not,  si64 , + min_64 * v2_8 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 * v2_64 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 * v2_32 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 * v2_16 +) // overflow detect
+check_does_compile(not,  csi64 , + min_64 * v2_8 +) // overflow detect
 static_assert(min_32 * v2_64 == -0x1'0000'0000_csi64 );
-check_does_compile(not,  si32 , + min_32 * v2_32 +) // overflow detect
-check_does_compile(not,  si32 , + min_32 * v2_16 +) // overflow detect
-check_does_compile(not,  si32 , + min_32 * v2_8 +) // overflow detect
+check_does_compile(not,  csi32 , + min_32 * v2_32 +) // overflow detect
+check_does_compile(not,  csi32 , + min_32 * v2_16 +) // overflow detect
+check_does_compile(not,  csi32 , + min_32 * v2_8 +) // overflow detect
 static_assert(min_16 * v2_64 == -0x1'0000_csi64  );
 static_assert(min_16 * v2_32 == -0x1'0000_csi32 );
-check_does_compile(not,  si16 , + min_16 * v2_16 +) // overflow detect
-check_does_compile(not,  si16 , + min_16 * v2_8 +) // overflow detect
+check_does_compile(not,  csi16 , + min_16 * v2_16 +) // overflow detect
+check_does_compile(not,  csi16 , + min_16 * v2_8 +) // overflow detect
 static_assert(min_8  * v2_64 == -256_csi64 );
 static_assert(min_8  * v2_32 == -256_csi32 );
 static_assert(min_8  * v2_16 == -256_csi16 );
-check_does_compile(not,  si8 , + min_8 * v2_8 +) // overflow detect
+check_does_compile(not,  csi8 , + min_8 * v2_8 +) // overflow detect
 
 // demonstrate unsigned multiplication overflow detection:
-check_does_compile(not,  ui64 , + maxu_64 * v2u_64 +) // overflow detect
-check_does_compile(not,  ui64 , + maxu_64 * v2u_32 +) // overflow detect
-check_does_compile(not,  ui64 , + maxu_64 * v2u_16 +) // overflow detect
-check_does_compile(not,  ui64 , + maxu_64 * v2u_8 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 * v2u_64 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 * v2u_32 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 * v2u_16 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 * v2u_8 +) // overflow detect
 static_assert(maxu_32 * v2u_64 + 2_cui64 == 0x2'0000'0000_cui64 );
-check_does_compile(not,  ui32 , + maxu_32 * v2u_32 +) // overflow detect
-check_does_compile(not,  ui32 , + maxu_32 * v2u_16 +) // overflow detect
-check_does_compile(not,  ui32 , + maxu_32 * v2u_8 +) // overflow detect
+check_does_compile(not,  cui32 , + maxu_32 * v2u_32 +) // overflow detect
+check_does_compile(not,  cui32 , + maxu_32 * v2u_16 +) // overflow detect
+check_does_compile(not,  cui32 , + maxu_32 * v2u_8 +) // overflow detect
 static_assert(maxu_16 * v2u_64 == 0x1'fffe_cui64  );
 static_assert(maxu_16 * v2u_32 == 0x1'fffe_cui32 );
-check_does_compile(not,  ui16 , + maxu_16 * v2u_16 +) // overflow detect
-check_does_compile(not,  ui16 , + maxu_16 * v2u_8 +) // overflow detect
+check_does_compile(not,  cui16 , + maxu_16 * v2u_16 +) // overflow detect
+check_does_compile(not,  cui16 , + maxu_16 * v2u_8 +) // overflow detect
 static_assert(maxu_8  * v2u_64 == 510_cui64 );
 static_assert(maxu_8  * v2u_32 == 510_cui32 );
 static_assert(maxu_8  * v2u_16 == 510_cui16 );
-check_does_compile(not,  ui8 , + maxu_8 * v2u_8 +) // overflow detect
+check_does_compile(not,  cui8 , + maxu_8 * v2u_8 +) // overflow detect
 
-check_does_compile(not,  ui16 , + 0xffff_cui16 * 0xffff_cui16 +) // overflow detect
+check_does_compile(not,  cui16 , + 0xffff_cui16 * 0xffff_cui16 +) // overflow detect
 //static_assert(promote_keep_signedness(0xffff_cui16 * 0xffff_cui16) == 0x1u); // wraps
-check_does_compile(not,  ui8 , + 0xff_cui8 * 0xff_cui8 +) // overflow detect
+check_does_compile(not,  cui8 , + 0xff_cui8 * 0xff_cui8 +) // overflow detect
 //static_assert(0xff_cui8 * 0xff_cui8 == 1_cui8);
 
 
@@ -682,10 +682,10 @@ static_assert(2_cui8  == (v1u_8  << v1u_8));
 static_assert(2_cui16 == (v1u_16 << v1u_8));
 static_assert(2_cui32 == (v1u_32 << v1u_8));
 static_assert(2_cui64 == (v1u_64 << v1u_8));
-check_does_compile(not,  ui8 , + v1u_8 << 8_cui8 +) // overflow detect
-check_does_compile(not,  ui16 , + v1u_16 << 16_cui8 +) // overflow detect
-check_does_compile(not,  ui32 , + v1u_32 << 32_cui8 +) // overflow detect
-check_does_compile(not,  ui64 , + v1u_64 << 64_cui8 +) // overflow detect
+check_does_compile(not,  cui8 , + v1u_8 << 8_cui8 +) // overflow detect
+check_does_compile(not,  cui16 , + v1u_16 << 16_cui8 +) // overflow detect
+check_does_compile(not,  cui32 , + v1u_32 << 32_cui8 +) // overflow detect
+check_does_compile(not,  cui64 , + v1u_64 << 64_cui8 +) // overflow detect
 
 // RShift operations (on unsigned)
 
@@ -693,25 +693,25 @@ static_assert(0_cui8  == (v1u_8  >> v1u_8));
 static_assert(0_cui16 == (v1u_16 >> v1u_8));
 static_assert(0_cui32 == (v1u_32 >> v1u_8));
 static_assert(0_cui64 == (v1u_64 >> v1u_8));
-check_does_compile(not,  ui8 , + maxu_8 >> 8_cui8 +) // overflow detect
-check_does_compile(not,  ui16 , + maxu_16 >> 16_cui8 +) // overflow detect
-check_does_compile(not,  ui32 , + maxu_32 >> 32_cui8 +) // overflow detect
-check_does_compile(not,  ui64 , + maxu_64 >> 64_cui8 +) // overflow detect
-check_does_compile(not,  ui64 , + maxu_64 >> maxu_64 +) // overflow detect
+check_does_compile(not,  cui8 , + maxu_8 >> 8_cui8 +) // overflow detect
+check_does_compile(not,  cui16 , + maxu_16 >> 16_cui8 +) // overflow detect
+check_does_compile(not,  cui32 , + maxu_32 >> 32_cui8 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 >> 64_cui8 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 >> maxu_64 +) // overflow detect
 
 // the following does not compile due to signed integer overflow on 32bit int
 //static_assert(static_cast<uint16_t>(0xffffu)* static_cast<uint16_t>(0xffffu));
 
-check_does_compile(not,  si32 , + 0x7fff'ffff_csi32+2_csi32 +) // overflow detect
+check_does_compile(not,  csi32 , + 0x7fff'ffff_csi32+2_csi32 +) // overflow detect
 //static_assert(0x7fff'ffff_csi32+2_csi32 == -0x7fff'ffff_csi32);
 //static_assert(0x7fff'ffff + 2); // doesn't compile, integer overflow
-check_does_compile(not,  si32 , + (-0x7fff'ffff_csi32 - 2_csi32) +) // overflow detect
+check_does_compile(not,  csi32 , + (-0x7fff'ffff_csi32 - 2_csi32) +) // overflow detect
 //static_assert(-0x7fff'ffff_csi32 - 2_csi32 == 0x7fff'ffff_csi32);
 //static_assert(-0x7fff'ffff - 2); // doesn't compile, integer overflow
 
 
-check_does_compile(   ,  si32, + std::numeric_limits<si32>::min() / 1_csi32  +) // no overflow
-check_does_compile(not,  si32, + std::numeric_limits<si32>::min() / -1_csi32  +) // overflow detected
+check_does_compile(   ,  csi32, + std::numeric_limits<csi32>::min() / 1_csi32  +) // no overflow
+check_does_compile(not,  csi32, + std::numeric_limits<csi32>::min() / -1_csi32  +) // overflow detected
 //static_assert(std::numeric_limits<si32>::min() / 1_csi32 == std::numeric_limits<si32>::min()); // wraps
 //static_assert(std::numeric_limits<si32>::min() / -1_csi32 == std::numeric_limits<si32>::min()); // wraps
 
@@ -720,11 +720,11 @@ check_does_compile(not,  si32, + std::numeric_limits<si32>::min() / -1_csi32  +)
 int from_int(...); // cause non-matching code below to SFINAE
 
 
-check_does_compile(not ,  si8, + from_int(' ')  +) // invalid conversion
-check_does_compile(not ,  ui8, + from_int(u' ')  +) // invalid conversion
-check_does_compile(not ,  ui32, + from_int(U' ')  +) // invalid conversion
-check_does_compile(not ,  ui16, + from_int(L' ')  +) // invalid conversion
-check_does_compile(not ,  ui8, + from_int(true)  +) // invalid conversion
+check_does_compile(not ,  csi8, + from_int(' ')  +) // invalid conversion
+check_does_compile(not ,  cui8, + from_int(u' ')  +) // invalid conversion
+check_does_compile(not ,  cui32, + from_int(U' ')  +) // invalid conversion
+check_does_compile(not ,  cui16, + from_int(L' ')  +) // invalid conversion
+check_does_compile(not ,  cui8, + from_int(true)  +) // invalid conversion
 //static_assert(32_cui8 == from_int(' ')); // does not compile
 //static_assert(32_cui8 == from_int(u' ')); // does not compile
 //static_assert(32_cui8 == from_int(U' ')); // does not compile
@@ -734,213 +734,213 @@ check_does_compile(not ,  ui8, + from_int(true)  +) // invalid conversion
 
 // to signed from signed
 
-check_does_compile( ,  si8, + from_int_to<si8>(42)  +) // ok conversion
-check_does_compile( ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::min()+0)  +) // ok conversion
-check_does_compile( ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::max()+0)  +) // ok conversion
-check_does_compile(not ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::min()-1)  +) // overflow conversion
-check_does_compile(not ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::max()+1)  +) // overflow conversion
+check_does_compile( ,  csi8, + from_int_to<csi8>(42)  +) // ok conversion
+check_does_compile( ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::min()+0)  +) // ok conversion
+check_does_compile( ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::max()+0)  +) // ok conversion
+check_does_compile(not ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::min()-1)  +) // overflow conversion
+check_does_compile(not ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::max()+1)  +) // overflow conversion
 
-check_does_compile(    ,  si16, + from_int_to<si16>(42)  +) // ok conversion
-check_does_compile(    ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::min()+0)  +) // ok conversion
-check_does_compile(    ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::max()+0)  +) // ok conversion
-check_does_compile(not ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::min()-1)  +) // overflow conversion
-check_does_compile(not ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::max()+1)  +) // overflow conversion
+check_does_compile(    ,  csi16, + from_int_to<csi16>(42)  +) // ok conversion
+check_does_compile(    ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::min()+0)  +) // ok conversion
+check_does_compile(    ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::max()+0)  +) // ok conversion
+check_does_compile(not ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::min()-1)  +) // overflow conversion
+check_does_compile(not ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::max()+1)  +) // overflow conversion
 
-check_does_compile(    ,  si32, + from_int_to<si32>(42)  +) // ok conversion
-check_does_compile(    ,  si32, + from_int_to<si32>((int64_t)std::numeric_limits<int32_t>::min()+0)  +) // ok conversion
-check_does_compile(    ,  si32, + from_int_to<si32>((int64_t)std::numeric_limits<int32_t>::max()+0)  +) // ok conversion
-check_does_compile(not ,  si32, + from_int_to<si32>((int64_t)std::numeric_limits<int32_t>::min()-1)  +) // overflow conversion
-check_does_compile(not ,  si32, + from_int_to<si32>((int64_t)std::numeric_limits<int32_t>::max()+1)  +) // overflow conversion
+check_does_compile(    ,  csi32, + from_int_to<csi32>(42)  +) // ok conversion
+check_does_compile(    ,  csi32, + from_int_to<csi32>((int64_t)std::numeric_limits<int32_t>::min()+0)  +) // ok conversion
+check_does_compile(    ,  csi32, + from_int_to<csi32>((int64_t)std::numeric_limits<int32_t>::max()+0)  +) // ok conversion
+check_does_compile(not ,  csi32, + from_int_to<csi32>((int64_t)std::numeric_limits<int32_t>::min()-1)  +) // overflow conversion
+check_does_compile(not ,  csi32, + from_int_to<csi32>((int64_t)std::numeric_limits<int32_t>::max()+1)  +) // overflow conversion
 
-check_does_compile(    ,  si64, + from_int_to<si64>(42)  +) // ok conversion
-check_does_compile(    ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::min()+0)  +) // ok conversion
-check_does_compile(    ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::max()+0)  +) // ok conversion
-check_does_compile(not ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::min()-1)  +) // check would cause UB
-check_does_compile(not ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::max()+1)  +) // check fails due to UB
+check_does_compile(    ,  csi64, + from_int_to<csi64>(42)  +) // ok conversion
+check_does_compile(    ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::min()+0)  +) // ok conversion
+check_does_compile(    ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::max()+0)  +) // ok conversion
+check_does_compile(not ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::min()-1)  +) // check would cause UB
+check_does_compile(not ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::max()+1)  +) // check fails due to UB
 
 
 // to signed from unsigned
-check_does_compile(    ,  si8, + from_int_to<si8>(42ull)  +) // ok conversion
-check_does_compile(    ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::min()+0)  +) // from unsigned too large
-check_does_compile(not ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::min()+0u)  +) // from unsigned too large
-check_does_compile(not ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::min()-1u)  +) //
-check_does_compile(    ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::max()+0u)  +) // ok conversion
-check_does_compile(not ,  si8, + from_int_to<si8>(std::numeric_limits<int8_t>::max()+1u)  +) // overflow from unsigned conversion
-check_does_compile(not ,  si8, + from_int_to<si8>(std::numeric_limits<uint8_t>::max())  +) // too big
-check_does_compile(not ,  si8, + from_int_to<si8>(std::numeric_limits<uint8_t>::min()-1u)  +) // promotion to int no overflow
-check_does_compile(    ,  si8, + from_int_to<si8>(std::numeric_limits<uint8_t>::max() + std::numeric_limits<int8_t>::min())  +) // OK
+check_does_compile(    ,  csi8, + from_int_to<csi8>(42ull)  +) // ok conversion
+check_does_compile(    ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::min()+0)  +) // from unsigned too large
+check_does_compile(not ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::min()+0u)  +) // from unsigned too large
+check_does_compile(not ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::min()-1u)  +) //
+check_does_compile(    ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::max()+0u)  +) // ok conversion
+check_does_compile(not ,  csi8, + from_int_to<csi8>(std::numeric_limits<int8_t>::max()+1u)  +) // overflow from unsigned conversion
+check_does_compile(not ,  csi8, + from_int_to<csi8>(std::numeric_limits<uint8_t>::max())  +) // too big
+check_does_compile(not ,  csi8, + from_int_to<csi8>(std::numeric_limits<uint8_t>::min()-1u)  +) // promotion to int no overflow
+check_does_compile(    ,  csi8, + from_int_to<csi8>(std::numeric_limits<uint8_t>::max() + std::numeric_limits<int8_t>::min())  +) // OK
 
-check_does_compile(    ,  si16, + from_int_to<si16>(42ull)  +) // ok conversion
-check_does_compile(    ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::min()+0ll)  +) // from unsigned too large
-check_does_compile(not ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::min()+0u)  +) // from unsigned too large
-check_does_compile(not ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::min()-1u)  +) // ok from unsigned too large
-check_does_compile(    ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::max()+0ull)  +) // ok conversion
-check_does_compile(not ,  si16, + from_int_to<si16>(std::numeric_limits<int16_t>::max()+1ull)  +) // overflow from unsigned conversion
-check_does_compile(not ,  si16, + from_int_to<si16>(std::numeric_limits<uint16_t>::max())  +) // too big
-check_does_compile(not ,  si16, + from_int_to<si16>(std::numeric_limits<uint16_t>::min()-1u)  +) // unsigned overflow leads to too big value
-check_does_compile(    ,  si16, + from_int_to<si16>(std::numeric_limits<uint16_t>::max() + std::numeric_limits<int16_t>::min())  +) // OKdue to integral promotion
+check_does_compile(    ,  csi16, + from_int_to<csi16>(42ull)  +) // ok conversion
+check_does_compile(    ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::min()+0ll)  +) // from unsigned too large
+check_does_compile(not ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::min()+0u)  +) // from unsigned too large
+check_does_compile(not ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::min()-1u)  +) // ok from unsigned too large
+check_does_compile(    ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::max()+0ull)  +) // ok conversion
+check_does_compile(not ,  csi16, + from_int_to<csi16>(std::numeric_limits<int16_t>::max()+1ull)  +) // overflow from unsigned conversion
+check_does_compile(not ,  csi16, + from_int_to<csi16>(std::numeric_limits<uint16_t>::max())  +) // too big
+check_does_compile(not ,  csi16, + from_int_to<csi16>(std::numeric_limits<uint16_t>::min()-1u)  +) // unsigned overflow leads to too big value
+check_does_compile(    ,  csi16, + from_int_to<csi16>(std::numeric_limits<uint16_t>::max() + std::numeric_limits<int16_t>::min())  +) // OKdue to integral promotion
 
-check_does_compile(    ,  si32, + from_int_to<si32>(42ull)  +) // ok conversion
-check_does_compile(    ,  si32, + from_int_to<si32>(std::numeric_limits<int32_t>::min()+0)  +) // from unsigned too large
-check_does_compile(not ,  si32, + from_int_to<si32>(std::numeric_limits<int32_t>::min()+0u)  +) // from unsigned too large
-check_does_compile(    ,  si32, + from_int_to<si32>(std::numeric_limits<int32_t>::min()-1u)  +) // ok from unsigned too large
-check_does_compile(    ,  si32, + from_int_to<si32>(std::numeric_limits<int32_t>::max()+0u)  +) // ok conversion
-check_does_compile(not ,  si32, + from_int_to<si32>(std::numeric_limits<int32_t>::max()+1u)  +) // overflow from unsigned conversion
-check_does_compile(not ,  si32, + from_int_to<si32>(std::numeric_limits<uint32_t>::max())  +) // too big
-check_does_compile(not ,  si32, + from_int_to<si32>(std::numeric_limits<uint32_t>::min()-1)  +) // unsigned overflow leads to too big value
-check_does_compile(    ,  si32, + from_int_to<si32>(std::numeric_limits<uint32_t>::max()-std::numeric_limits<int32_t>::min())  +) // OK
+check_does_compile(    ,  csi32, + from_int_to<csi32>(42ull)  +) // ok conversion
+check_does_compile(    ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::min()+0)  +) // from unsigned too large
+check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::min()+0u)  +) // from unsigned too large
+check_does_compile(    ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::min()-1u)  +) // ok from unsigned too large
+check_does_compile(    ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::max()+0u)  +) // ok conversion
+check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::max()+1u)  +) // overflow from unsigned conversion
+check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<uint32_t>::max())  +) // too big
+check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<uint32_t>::min()-1)  +) // unsigned overflow leads to too big value
+check_does_compile(    ,  csi32, + from_int_to<csi32>(std::numeric_limits<uint32_t>::max()-std::numeric_limits<int32_t>::min())  +) // OK
 
-check_does_compile(    ,  si64, + from_int_to<si64>(42ull)  +) // ok conversion
-check_does_compile(    ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::min()+0ll)  +) // from unsigned too large
-check_does_compile(not ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::min()+0ull)  +) // from unsigned too large
-check_does_compile(    ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::min()-1ull)  +) // ok from unsigned too large
-check_does_compile(    ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::max()+0ull)  +) // ok conversion
-check_does_compile(not ,  si64, + from_int_to<si64>(std::numeric_limits<int64_t>::max()+1ull)  +) // overflow from unsigned conversion
-check_does_compile(not ,  si64, + from_int_to<si64>(std::numeric_limits<uint64_t>::max())  +) // too big
-check_does_compile(not ,  si64, + from_int_to<si64>(std::numeric_limits<uint64_t>::min()-1)  +) // unsigned overflow leads to too big value
-check_does_compile(    ,  si64, + from_int_to<si64>(std::numeric_limits<uint64_t>::max()-std::numeric_limits<int64_t>::min())  +) // OK
+check_does_compile(    ,  csi64, + from_int_to<csi64>(42ull)  +) // ok conversion
+check_does_compile(    ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::min()+0ll)  +) // from unsigned too large
+check_does_compile(not ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::min()+0ull)  +) // from unsigned too large
+check_does_compile(    ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::min()-1ull)  +) // ok from unsigned too large
+check_does_compile(    ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::max()+0ull)  +) // ok conversion
+check_does_compile(not ,  csi64, + from_int_to<csi64>(std::numeric_limits<int64_t>::max()+1ull)  +) // overflow from unsigned conversion
+check_does_compile(not ,  csi64, + from_int_to<csi64>(std::numeric_limits<uint64_t>::max())  +) // too big
+check_does_compile(not ,  csi64, + from_int_to<csi64>(std::numeric_limits<uint64_t>::min()-1)  +) // unsigned overflow leads to too big value
+check_does_compile(    ,  csi64, + from_int_to<csi64>(std::numeric_limits<uint64_t>::max()-std::numeric_limits<int64_t>::min())  +) // OK
 
 // to unsigned from (mostly) unsigned
 
-check_does_compile(not ,  ui8, + from_int_to<ui8>(-1)  +) // not ok conversion
-check_does_compile(    ,  ui8, + from_int_to<ui8>(42)  +) // ok conversion
-check_does_compile(    ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::min()+0)  +) // ok conversion
-check_does_compile(    ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::max()+0)  +) // ok conversion
-check_does_compile(not ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::min()-1)  +) // overflow conversion
-check_does_compile(not ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::max()+1)  +) // overflow conversion
+check_does_compile(not ,  cui8, + from_int_to<cui8>(-1)  +) // not ok conversion
+check_does_compile(    ,  cui8, + from_int_to<cui8>(42)  +) // ok conversion
+check_does_compile(    ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::min()+0)  +) // ok conversion
+check_does_compile(    ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::max()+0)  +) // ok conversion
+check_does_compile(not ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::min()-1)  +) // overflow conversion
+check_does_compile(not ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::max()+1)  +) // overflow conversion
 
-check_does_compile(not ,  ui16, + from_int_to<ui16>(-1)  +) // not ok conversion
-check_does_compile(    ,  ui16, + from_int_to<ui16>(42)  +) // ok conversion
-check_does_compile(    ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::min()+0)  +) // ok conversion
-check_does_compile(    ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::max()+0)  +) // ok conversion
-check_does_compile(not ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::min()-1)  +) // overflow conversion
-check_does_compile(not ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::max()+1)  +) // overflow conversion
+check_does_compile(not ,  cui16, + from_int_to<cui16>(-1)  +) // not ok conversion
+check_does_compile(    ,  cui16, + from_int_to<cui16>(42)  +) // ok conversion
+check_does_compile(    ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::min()+0)  +) // ok conversion
+check_does_compile(    ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::max()+0)  +) // ok conversion
+check_does_compile(not ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::min()-1)  +) // overflow conversion
+check_does_compile(not ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::max()+1)  +) // overflow conversion
 
-check_does_compile(not ,  ui32, + from_int_to<ui32>(-1)  +) // not ok conversion
-check_does_compile(    ,  ui32, + from_int_to<ui32>(42)  +) // ok conversion
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<uint32_t>::min()+0)  +) // ok conversion
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<uint32_t>::max()+0)  +) // ok conversion
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<uint32_t>::min()-1)  +) // expression wraps, OK conversion
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<uint32_t>::max()+1)  +) // expression wraps, OK conversion
+check_does_compile(not ,  cui32, + from_int_to<cui32>(-1)  +) // not ok conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(42)  +) // ok conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::min()+0)  +) // ok conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max()+0)  +) // ok conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::min()-1)  +) // expression wraps, OK conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max()+1)  +) // expression wraps, OK conversion
 
-check_does_compile(not ,  ui64, + from_int_to<ui64>(-1)  +) // not ok conversion
-check_does_compile(    ,  ui64, + from_int_to<ui64>(42)  +) // ok conversion
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<uint64_t>::min()+0)  +) // ok conversion
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<uint64_t>::max()+0)  +) // ok conversion
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<uint64_t>::min()-1)  +) // expression wraps, OK conversion
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<uint64_t>::max()+1)  +) // expression wraps, OK conversion
+check_does_compile(not ,  cui64, + from_int_to<cui64>(-1)  +) // not ok conversion
+check_does_compile(    ,  cui64, + from_int_to<cui64>(42)  +) // ok conversion
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<uint64_t>::min()+0)  +) // ok conversion
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<uint64_t>::max()+0)  +) // ok conversion
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<uint64_t>::min()-1)  +) // expression wraps, OK conversion
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<uint64_t>::max()+1)  +) // expression wraps, OK conversion
 
 // to unsigned from signed
 
-check_does_compile(    ,  ui8, + from_int_to<ui8>(42ll)  +) // ok conversion
-check_does_compile(not ,  ui8, + from_int_to<ui8>(std::numeric_limits<int8_t>::min()+0)  +) // from unsigned too large
-check_does_compile(not ,  ui8, + from_int_to<ui8>(std::numeric_limits<int8_t>::min()+0u)  +) // from unsigned too large
-check_does_compile(not ,  ui8, + from_int_to<ui8>(std::numeric_limits<int8_t>::min()-1u)  +) //
-check_does_compile(    ,  ui8, + from_int_to<ui8>(std::numeric_limits<int8_t>::max()+0u)  +) // ok conversion
-check_does_compile(    ,  ui8, + from_int_to<ui8>(std::numeric_limits<int8_t>::max()+1u)  +) // overflow from unsigned conversion
-check_does_compile(    ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::max())  +) // ok
-check_does_compile(not ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::max()+1u)  +) // not ok
-check_does_compile(not ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::min()-1u)  +) // unsigned overflow leads to too big value
-check_does_compile(    ,  ui8, + from_int_to<ui8>(std::numeric_limits<uint8_t>::max() + std::numeric_limits<int8_t>::min())  +) // OKdue to integral promotion
+check_does_compile(    ,  cui8, + from_int_to<cui8>(42ll)  +) // ok conversion
+check_does_compile(not ,  cui8, + from_int_to<cui8>(std::numeric_limits<int8_t>::min()+0)  +) // from unsigned too large
+check_does_compile(not ,  cui8, + from_int_to<cui8>(std::numeric_limits<int8_t>::min()+0u)  +) // from unsigned too large
+check_does_compile(not ,  cui8, + from_int_to<cui8>(std::numeric_limits<int8_t>::min()-1u)  +) //
+check_does_compile(    ,  cui8, + from_int_to<cui8>(std::numeric_limits<int8_t>::max()+0u)  +) // ok conversion
+check_does_compile(    ,  cui8, + from_int_to<cui8>(std::numeric_limits<int8_t>::max()+1u)  +) // overflow from unsigned conversion
+check_does_compile(    ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::max())  +) // ok
+check_does_compile(not ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::max()+1u)  +) // not ok
+check_does_compile(not ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::min()-1u)  +) // unsigned overflow leads to too big value
+check_does_compile(    ,  cui8, + from_int_to<cui8>(std::numeric_limits<uint8_t>::max() + std::numeric_limits<int8_t>::min())  +) // OKdue to integral promotion
 
-check_does_compile(    ,  ui16, + from_int_to<ui16>(42ll)  +) // ok conversion
-check_does_compile(not ,  ui16, + from_int_to<ui16>(std::numeric_limits<int16_t>::min()+0ll)  +) // from unsigned too large
-check_does_compile(not ,  ui16, + from_int_to<ui16>(std::numeric_limits<int16_t>::min()+0u)  +) // from unsigned too large
-check_does_compile(not ,  ui16, + from_int_to<ui16>(std::numeric_limits<int16_t>::min()-1u)  +) // ok from unsigned too large
-check_does_compile(    ,  ui16, + from_int_to<ui16>(std::numeric_limits<int16_t>::max()+0ull)  +) // ok conversion
-check_does_compile(    ,  ui16, + from_int_to<ui16>(std::numeric_limits<int16_t>::max()+1ull)  +) // overflow from unsigned conversion
-check_does_compile(    ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::max())  +) // too big
-check_does_compile(not ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::max() +1u)  +) // too big
-check_does_compile(not ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::min()-1u)  +) // unsigned overflow leads to too big value
-check_does_compile(    ,  ui16, + from_int_to<ui16>(std::numeric_limits<uint16_t>::max() + std::numeric_limits<int16_t>::min())  +) // OKdue to integral promotion
+check_does_compile(    ,  cui16, + from_int_to<cui16>(42ll)  +) // ok conversion
+check_does_compile(not ,  cui16, + from_int_to<cui16>(std::numeric_limits<int16_t>::min()+0ll)  +) // from unsigned too large
+check_does_compile(not ,  cui16, + from_int_to<cui16>(std::numeric_limits<int16_t>::min()+0u)  +) // from unsigned too large
+check_does_compile(not ,  cui16, + from_int_to<cui16>(std::numeric_limits<int16_t>::min()-1u)  +) // ok from unsigned too large
+check_does_compile(    ,  cui16, + from_int_to<cui16>(std::numeric_limits<int16_t>::max()+0ull)  +) // ok conversion
+check_does_compile(    ,  cui16, + from_int_to<cui16>(std::numeric_limits<int16_t>::max()+1ull)  +) // overflow from unsigned conversion
+check_does_compile(    ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::max())  +) // too big
+check_does_compile(not ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::max() +1u)  +) // too big
+check_does_compile(not ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::min()-1u)  +) // unsigned overflow leads to too big value
+check_does_compile(    ,  cui16, + from_int_to<cui16>(std::numeric_limits<uint16_t>::max() + std::numeric_limits<int16_t>::min())  +) // OKdue to integral promotion
 
-check_does_compile(    ,  ui32, + from_int_to<ui32>(42ll)  +) // ok conversion
-check_does_compile(not ,  ui32, + from_int_to<ui32>(std::numeric_limits<int32_t>::min())  +) // from signed too large
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<int32_t>::min()+0u)  +) // from unsigned too large
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<int32_t>::min()-1u)  +) // ok from unsigned too large
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<int32_t>::max()+0u)  +) // ok conversion
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<int32_t>::max()+1u)  +) // overflow from unsigned conversion
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<uint32_t>::max())  +) // too big
-check_does_compile(not ,  ui32, + from_int_to<ui32>(std::numeric_limits<uint32_t>::min()-1ll)  +) // unsigned overflow leads to too big value
-check_does_compile(    ,  ui32, + from_int_to<ui32>(std::numeric_limits<uint32_t>::max()-std::numeric_limits<int32_t>::min())  +) // OK
+check_does_compile(    ,  cui32, + from_int_to<cui32>(42ll)  +) // ok conversion
+check_does_compile(not ,  cui32, + from_int_to<cui32>(std::numeric_limits<int32_t>::min())  +) // from signed too large
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<int32_t>::min()+0u)  +) // from unsigned too large
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<int32_t>::min()-1u)  +) // ok from unsigned too large
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<int32_t>::max()+0u)  +) // ok conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<int32_t>::max()+1u)  +) // overflow from unsigned conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max())  +) // too big
+check_does_compile(not ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::min()-1ll)  +) // unsigned overflow leads to too big value
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max()-std::numeric_limits<int32_t>::min())  +) // OK
 
-check_does_compile(    ,  ui64, + from_int_to<ui64>(42ll)  +) // ok conversion
-check_does_compile(not ,  ui64, + from_int_to<ui64>(std::numeric_limits<int64_t>::min())  +) // from unsigned too large
-check_does_compile(not ,  ui64, + from_int_to<ui64>(-1)  +) // negative to unsigned fails
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<int64_t>::min()+0ull)  +) // from unsigned too large
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<int64_t>::min()-1ull)  +) // ok from unsigned too large
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<int64_t>::max())  +) // ok conversion
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<int64_t>::max()+1ull)  +) // unsigned overflow always OK
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<uint64_t>::max())  +) // OK
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<uint64_t>::min()-1ll)  +) // unsigned overflow always OK
-check_does_compile(    ,  ui64, + from_int_to<ui64>(std::numeric_limits<uint64_t>::max()-std::numeric_limits<int64_t>::min())  +) // OK
+check_does_compile(    ,  cui64, + from_int_to<cui64>(42ll)  +) // ok conversion
+check_does_compile(not ,  cui64, + from_int_to<cui64>(std::numeric_limits<int64_t>::min())  +) // from unsigned too large
+check_does_compile(not ,  cui64, + from_int_to<cui64>(-1)  +) // negative to unsigned fails
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<int64_t>::min()+0ull)  +) // from unsigned too large
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<int64_t>::min()-1ull)  +) // ok from unsigned too large
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<int64_t>::max())  +) // ok conversion
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<int64_t>::max()+1ull)  +) // unsigned overflow always OK
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<uint64_t>::max())  +) // OK
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<uint64_t>::min()-1ll)  +) // unsigned overflow always OK
+check_does_compile(    ,  cui64, + from_int_to<cui64>(std::numeric_limits<uint64_t>::max()-std::numeric_limits<int64_t>::min())  +) // OK
 
 // check negation detection
-check_does_compile(    ,  si8, +  (- max_8)  +) // ok conversion
-check_does_compile(not ,  si8, +  (- min_8)  +) // ok conversion
-check_does_compile(    ,  si16, +  (- max_16)  +) // ok conversion
-check_does_compile(not ,  si16, +  (- min_16)  +) // ok conversion
-check_does_compile(    ,  si32, +  (- max_32)  +) // ok conversion
-check_does_compile(not ,  si32, +  (- min_32)  +) // ok conversion
-check_does_compile(    ,  si64, +  (- max_64)  +) // ok conversion
-check_does_compile(not ,  si64, +  (- min_64)  +) // ok conversion
+check_does_compile(    ,  csi8, +  (- max_8)  +) // ok conversion
+check_does_compile(not ,  csi8, +  (- min_8)  +) // ok conversion
+check_does_compile(    ,  csi16, +  (- max_16)  +) // ok conversion
+check_does_compile(not ,  csi16, +  (- min_16)  +) // ok conversion
+check_does_compile(    ,  csi32, +  (- max_32)  +) // ok conversion
+check_does_compile(not ,  csi32, +  (- min_32)  +) // ok conversion
+check_does_compile(    ,  csi64, +  (- max_64)  +) // ok conversion
+check_does_compile(not ,  csi64, +  (- min_64)  +) // ok conversion
 // negation of unsigned types is not available due to concept
 
 // check increment/decrement continue here.... (see below, cannot be at compile time)
 // check add
-check_does_compile(not ,  si8,  +  max_8  + 1_csi8  +) // overflow
-check_does_compile(not ,  si16, +  max_16 + 1_csi8  +) // overflow
-check_does_compile(not ,  si32, +  max_32 + 1_csi8  +) // overflow
-check_does_compile(not ,  si64, +  max_64 + 1_csi8  +) // overflow
-check_does_compile(not ,  si8,  +  min_8  + -1_csi8  +) //overflow
-check_does_compile(not ,  si16, +  min_16 + -1_csi8  +) //overflow
-check_does_compile(not ,  si32, +  min_32 + -1_csi8  +) //overflow
-check_does_compile(not ,  si64, +  min_64 + -1_csi8  +) //overflow
-check_does_compile(not ,  si8,  +   1_cui8  +) // mixing signedness
-check_does_compile(not ,  si16, +   1_cui8  +) // mixing signedness
-check_does_compile(not ,  si32, +   1_cui8  +) // mixing signedness
-check_does_compile(not ,  si64, +   1_cui8  +) // mixing signedness
-check_does_compile(not ,  ui8,  +  maxu_8  + 1_cui8  +) //overflow
-check_does_compile(not ,  ui16, +  maxu_16 + 1_cui8  +) //overflow
-check_does_compile(not ,  ui32, +  maxu_32 + 1_cui8  +) //overflow
-check_does_compile(not ,  ui64, +  maxu_64 + 1_cui8  +) //overflow
-check_does_compile(not ,  ui8,  +   1_csi8  +) // mixing signedness
-check_does_compile(not ,  ui16, +   1_csi8  +) // mixing signedness
-check_does_compile(not ,  ui32, +   1_csi8  +) // mixing signedness
-check_does_compile(not ,  ui64, +   1_csi8  +) // mixing signedness
-check_does_compile(    ,  ui8,  +  1_cui8  + 1_cui8  +) // same signedness
-check_does_compile(    ,  ui16, +  1_cui16 + 1_cui8  +) // same signedness
-check_does_compile(    ,  ui32, +  1_cui32 + 1_cui8  +) // same signedness
-check_does_compile(    ,  ui64, +  1_cui64 + 1_cui8  +) // same signedness
+check_does_compile(not ,  csi8,  +  max_8  + 1_csi8  +) // overflow
+check_does_compile(not ,  csi16, +  max_16 + 1_csi8  +) // overflow
+check_does_compile(not ,  csi32, +  max_32 + 1_csi8  +) // overflow
+check_does_compile(not ,  csi64, +  max_64 + 1_csi8  +) // overflow
+check_does_compile(not ,  csi8,  +  min_8  + -1_csi8  +) //overflow
+check_does_compile(not ,  csi16, +  min_16 + -1_csi8  +) //overflow
+check_does_compile(not ,  csi32, +  min_32 + -1_csi8  +) //overflow
+check_does_compile(not ,  csi64, +  min_64 + -1_csi8  +) //overflow
+check_does_compile(not ,  csi8,  +   1_cui8  +) // mixing signedness
+check_does_compile(not ,  csi16, +   1_cui8  +) // mixing signedness
+check_does_compile(not ,  csi32, +   1_cui8  +) // mixing signedness
+check_does_compile(not ,  csi64, +   1_cui8  +) // mixing signedness
+check_does_compile(not ,  cui8,  +  maxu_8  + 1_cui8  +) //overflow
+check_does_compile(not ,  cui16, +  maxu_16 + 1_cui8  +) //overflow
+check_does_compile(not ,  cui32, +  maxu_32 + 1_cui8  +) //overflow
+check_does_compile(not ,  cui64, +  maxu_64 + 1_cui8  +) //overflow
+check_does_compile(not ,  cui8,  +   1_csi8  +) // mixing signedness
+check_does_compile(not ,  cui16, +   1_csi8  +) // mixing signedness
+check_does_compile(not ,  cui32, +   1_csi8  +) // mixing signedness
+check_does_compile(not ,  cui64, +   1_csi8  +) // mixing signedness
+check_does_compile(    ,  cui8,  +  1_cui8  + 1_cui8  +) // same signedness
+check_does_compile(    ,  cui16, +  1_cui16 + 1_cui8  +) // same signedness
+check_does_compile(    ,  cui32, +  1_cui32 + 1_cui8  +) // same signedness
+check_does_compile(    ,  cui64, +  1_cui64 + 1_cui8  +) // same signedness
 // check substract:
-check_does_compile(not ,  si8,  +  max_8  - -1_csi8  +) // overflow
-check_does_compile(not ,  si16, +  max_16 - -1_csi8  +) // overflow
-check_does_compile(not ,  si32, +  max_32 - -1_csi8  +) // overflow
-check_does_compile(not ,  si64, +  max_64 - -1_csi8  +) // overflow
-check_does_compile(    ,  si8,  +  max_8  - 1_csi8  +) //
-check_does_compile(    ,  si16, +  max_16 - 1_csi8  +) //
-check_does_compile(    ,  si32, +  max_32 - 1_csi8  +) //
-check_does_compile(    ,  si64, +  max_64 - 1_csi8  +) //
-check_does_compile(not ,  si8,  +  min_8  - 1_csi8  +) //overflow
-check_does_compile(not ,  si16, +  min_16 - 1_csi8  +) //overflow
-check_does_compile(not ,  si32, +  min_32 - 1_csi8  +) //overflow
-check_does_compile(not ,  si64, +  min_64 - 1_csi8  +) //overflow
-check_does_compile(not ,  si8,   - 1_cui8  +) // mixing signedness
-check_does_compile(not ,  si16,  - 1_cui8  +) // mixing signedness
-check_does_compile(not ,  si32,  - 1_cui8  +) // mixing signedness
-check_does_compile(not ,  si64,  - 1_cui8  +) // mixing signedness
-check_does_compile(not ,  ui8,  +  0_cui8  - 1_cui8  +) //overflow
-check_does_compile(not ,  ui16, +  0_cui16 - 1_cui8  +) //overflow
-check_does_compile(not ,  ui32, +  0_cui32 - 1_cui8  +) //overflow
-check_does_compile(not ,  ui64, +  0_cui64 - 1_cui8  +) //overflow
-check_does_compile(not ,  ui8,   - 1_csi8  +) // mixing signedness
-check_does_compile(not ,  ui16,  - 1_csi8  +) // mixing signedness
-check_does_compile(not ,  ui32,  - 1_csi8  +) // mixing signedness
-check_does_compile(not ,  ui64,  - 1_csi8  +) // mixing signedness
-check_does_compile(    ,  ui8,  +  1_cui8  - 1_cui8  -) // same signedness
-check_does_compile(    ,  ui16, +  1_cui16 - 1_cui8  +) // same signedness
-check_does_compile(    ,  ui32, +  1_cui32 - 1_cui8  +) // same signedness
-check_does_compile(    ,  ui64, +  1_cui64 - 1_cui8  +) // same signedness
+check_does_compile(not ,  csi8,  +  max_8  - -1_csi8  +) // overflow
+check_does_compile(not ,  csi16, +  max_16 - -1_csi8  +) // overflow
+check_does_compile(not ,  csi32, +  max_32 - -1_csi8  +) // overflow
+check_does_compile(not ,  csi64, +  max_64 - -1_csi8  +) // overflow
+check_does_compile(    ,  csi8,  +  max_8  - 1_csi8  +) //
+check_does_compile(    ,  csi16, +  max_16 - 1_csi8  +) //
+check_does_compile(    ,  csi32, +  max_32 - 1_csi8  +) //
+check_does_compile(    ,  csi64, +  max_64 - 1_csi8  +) //
+check_does_compile(not ,  csi8,  +  min_8  - 1_csi8  +) //overflow
+check_does_compile(not ,  csi16, +  min_16 - 1_csi8  +) //overflow
+check_does_compile(not ,  csi32, +  min_32 - 1_csi8  +) //overflow
+check_does_compile(not ,  csi64, +  min_64 - 1_csi8  +) //overflow
+check_does_compile(not ,  csi8,   - 1_cui8  +) // mixing signedness
+check_does_compile(not ,  csi16,  - 1_cui8  +) // mixing signedness
+check_does_compile(not ,  csi32,  - 1_cui8  +) // mixing signedness
+check_does_compile(not ,  csi64,  - 1_cui8  +) // mixing signedness
+check_does_compile(not ,  cui8,  +  0_cui8  - 1_cui8  +) //overflow
+check_does_compile(not ,  cui16, +  0_cui16 - 1_cui8  +) //overflow
+check_does_compile(not ,  cui32, +  0_cui32 - 1_cui8  +) //overflow
+check_does_compile(not ,  cui64, +  0_cui64 - 1_cui8  +) //overflow
+check_does_compile(not ,  cui8,   - 1_csi8  +) // mixing signedness
+check_does_compile(not ,  cui16,  - 1_csi8  +) // mixing signedness
+check_does_compile(not ,  cui32,  - 1_csi8  +) // mixing signedness
+check_does_compile(not ,  cui64,  - 1_csi8  +) // mixing signedness
+check_does_compile(    ,  cui8,  +  1_cui8  - 1_cui8  -) // same signedness
+check_does_compile(    ,  cui16, +  1_cui16 - 1_cui8  +) // same signedness
+check_does_compile(    ,  cui32, +  1_cui32 - 1_cui8  +) // same signedness
+check_does_compile(    ,  cui64, +  1_cui64 - 1_cui8  +) // same signedness
 
 
 }
@@ -975,10 +975,10 @@ template<typename T>
 constexpr bool
 is_integer = is_unsigned<T>||is_signed<T>;
 
-static_assert(is_integer<std::underlying_type_t<ui16>>);
-static_assert(!is_integer<ui16>);
-static_assert(is_integer<std::underlying_type_t<si16>>);
-static_assert(!is_integer<si16>);
+static_assert(is_integer<std::underlying_type_t<cui16>>);
+static_assert(!is_integer<cui16>);
+static_assert(is_integer<std::underlying_type_t<csi16>>);
+static_assert(!is_integer<csi16>);
 
 
 void signedIntegerBoundaryTestResultRecovery(){
@@ -1136,11 +1136,11 @@ void ui64postdecrement(){
     ASSERT_EQUAL(0_cui64,one);
 }
 void ui16intExists() {
-    using pssodin::ui16;
+    using pssodin::cui16;
     auto large=0xff00_cui16;
     //0x10000_cui16; // compile error
     //ui16{0xfffff}; // narrowing detection
-    ASSERT_EQUAL(ui16{0xff00u},large);
+    ASSERT_EQUAL(cui16{0xff00u},large);
 }
 
 void ui16NotEqualAutomaticInCpp20(){
@@ -1324,7 +1324,7 @@ void si8Negation(){
 }
 
 void si8negationminintthrows(){
-    ASSERT_THROWS(std::ignore = -(std::numeric_limits<pssodin::si8>::min()), char const *);
+    ASSERT_THROWS(std::ignore = -(std::numeric_limits<pssodin::csi8>::min()), char const *);
 }
 
 void si8overflowIsDetected(){
@@ -1361,7 +1361,7 @@ void ui8OutputAsInteger(){
 
 void checkedFromInt(){
     using namespace pssodin;
-    ASSERT_THROWS(std::ignore = from_int_to<ui8>(2400u), char const *);
+    ASSERT_THROWS(std::ignore = from_int_to<cui8>(2400u), char const *);
 
 }
 

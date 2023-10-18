@@ -36,16 +36,16 @@ namespace pssodin { // Peter Sommerlad's simple Overflow Detecting Integral Numb
 
 
 // unsigned 
-enum class [[nodiscard]] ui8: std::uint8_t { pssodin_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]ui16: std::uint16_t{ pssodin_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]ui32: std::uint32_t{ pssodin_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]ui64: std::uint64_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]] cui8: std::uint8_t { pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]cui16: std::uint16_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]cui32: std::uint32_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]cui64: std::uint64_t{ pssodin_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
 consteval
-ui8 operator""_cui8(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<ui8>>::max()) {
-        return ui8(val);
+cui8 operator""_cui8(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<cui8>>::max()) {
+        return cui8(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -53,9 +53,9 @@ ui8 operator""_cui8(unsigned long long val) {
 
 
 consteval
-ui16 operator""_cui16(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<ui16>>::max()) {
-        return ui16(val);
+cui16 operator""_cui16(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<cui16>>::max()) {
+        return cui16(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -63,9 +63,9 @@ ui16 operator""_cui16(unsigned long long val) {
 
 
 consteval
-ui32 operator""_cui32(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<ui32>>::max()) {
-        return ui32(val);
+cui32 operator""_cui32(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<cui32>>::max()) {
+        return cui32(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -73,27 +73,27 @@ ui32 operator""_cui32(unsigned long long val) {
 
 
 consteval
-ui64 operator""_cui64(unsigned long long val) {
-    if constexpr (sizeof(ui64) < sizeof(val)){
+cui64 operator""_cui64(unsigned long long val) {
+    if constexpr (sizeof(cui64) < sizeof(val)){
         if (val > 0xffff'ffff'fffffffful) {
             throw "integral constant too large"; // trigger compile-time error
         }
     }
-    return ui64(val);
+    return cui64(val);
 }
 
 }
 // signed
-enum class [[nodiscard]]si8 : std::int8_t { pssodin_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]si16: std::int16_t{ pssodin_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]si32: std::int32_t{ pssodin_tag_to_prevent_mixing_other_enums };
-enum class [[nodiscard]]si64: std::int64_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]csi8 : std::int8_t { pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]csi16: std::int16_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]csi32: std::int32_t{ pssodin_tag_to_prevent_mixing_other_enums };
+enum class [[nodiscard]]csi64: std::int64_t{ pssodin_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
 consteval
-si8 operator""_csi8(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<si8>>::max()) {
-        return si8(val);
+csi8 operator""_csi8(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<csi8>>::max()) {
+        return csi8(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -101,9 +101,9 @@ si8 operator""_csi8(unsigned long long val) {
 
 
 consteval
-si16 operator""_csi16(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<si16>>::max()) {
-        return si16(val);
+csi16 operator""_csi16(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<csi16>>::max()) {
+        return csi16(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -111,9 +111,9 @@ si16 operator""_csi16(unsigned long long val) {
 
 
 consteval
-si32 operator""_csi32(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<si32>>::max()) {
-        return si32(val);
+csi32 operator""_csi32(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<csi32>>::max()) {
+        return csi32(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -121,9 +121,9 @@ si32 operator""_csi32(unsigned long long val) {
 
 
 consteval
-si64 operator""_csi64(unsigned long long val) {
-    if (val <= std::numeric_limits<std::underlying_type_t<si64>>::max()) {
-        return si64(val);
+csi64 operator""_csi64(unsigned long long val) {
+    if (val <= std::numeric_limits<std::underlying_type_t<csi64>>::max()) {
+        return csi64(val);
     } else {
         throw "integral constant too large"; // trigger compile-time error
     }
@@ -535,14 +535,14 @@ from_int(T val) noexcept {
     using std::conditional_t;
     struct cannot_convert_integer{};
     using result_t =
-            conditional_t<is_compatible_integer_v<std::uint8_t,T>, ui8,
-             conditional_t<is_compatible_integer_v<std::uint16_t,T>, ui16,
-              conditional_t<is_compatible_integer_v<std::uint32_t,T>, ui32,
-               conditional_t<is_compatible_integer_v<std::uint64_t,T>, ui64,
-                conditional_t<is_compatible_integer_v<std::int8_t,T>, si8,
-                 conditional_t<is_compatible_integer_v<std::int16_t,T>, si16,
-                  conditional_t<is_compatible_integer_v<std::int32_t,T>, si32,
-                   conditional_t<is_compatible_integer_v<std::int64_t,T>, si64, cannot_convert_integer>>>>>>>>;
+            conditional_t<is_compatible_integer_v<std::uint8_t,T>, cui8,
+             conditional_t<is_compatible_integer_v<std::uint16_t,T>, cui16,
+              conditional_t<is_compatible_integer_v<std::uint32_t,T>, cui32,
+               conditional_t<is_compatible_integer_v<std::uint64_t,T>, cui64,
+                conditional_t<is_compatible_integer_v<std::int8_t,T>, csi8,
+                 conditional_t<is_compatible_integer_v<std::int16_t,T>, csi16,
+                  conditional_t<is_compatible_integer_v<std::int32_t,T>, csi32,
+                   conditional_t<is_compatible_integer_v<std::int64_t,T>, csi64, cannot_convert_integer>>>>>>>>;
     return static_cast<result_t>(val); // no need to check, result_t corresponds to input T's range
 }
 // path tests are compile-time checked:
@@ -963,7 +963,9 @@ std::ostream& operator<<(std::ostream &out, a_safeint auto value){
 }
 
 }
-
+#undef NOEXCEPT_WITH_THROWING_ASSERTS
 #undef ps_assert
+#undef PSSODIN_RAISE_SIGFPE
+#undef PSSODIN_SHOULD_RAISE
 
 #endif /* SRC_PSSODIN_ */

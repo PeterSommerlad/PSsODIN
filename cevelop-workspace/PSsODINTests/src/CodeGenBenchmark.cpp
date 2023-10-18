@@ -35,7 +35,7 @@ struct operations {
 };
 
 std::initializer_list<int8_t> i8_seed{1,1,2,3,5,8/*,13,21,34,55,89*/};
-std::initializer_list<pssodin::si8> si8_seed{1_csi8,1_csi8,2_csi8,3_csi8,5_csi8,8_csi8/*,13_csi8,21_csi8,34_csi8,55_csi8,89_csi8*/};
+std::initializer_list<pssodin::csi8> si8_seed{1_csi8,1_csi8,2_csi8,3_csi8,5_csi8,8_csi8/*,13_csi8,21_csi8,34_csi8,55_csi8,89_csi8*/};
 
 auto sum(operations<int8_t> const &ops){
     return ops.sum();
@@ -50,16 +50,16 @@ auto sumnegative(operations<int8_t> const &ops){
     return ops.sumnegative();
 }
 
-auto sum(operations<si8> const &ops){
+auto sum(operations<csi8> const &ops){
     return ops.sum();
 }
-auto product(operations<si8> const &ops){
+auto product(operations<csi8> const &ops){
     return ops.product();
 }
-auto sumthirds(operations<si8> const &&ops){
+auto sumthirds(operations<csi8> const &&ops){
     return ops.sumthirds();
 }
-auto sumnegative(operations<si8> const &ops){
+auto sumnegative(operations<csi8> const &ops){
     return ops.sumnegative();
 }
 
@@ -68,7 +68,7 @@ auto sumnegative(operations<si8> const &ops){
 
 void codegenAdditionTest() {
     auto resi8 = sum(operations<int8_t>{i8_seed});
-    auto ressi8 =sum( operations<si8>{si8_seed});
+    auto ressi8 =sum( operations<csi8>{si8_seed});
     ASSERT_EQUAL(resi8,promote_keep_signedness(ressi8));
 }
 
@@ -82,18 +82,18 @@ void codegenMultiplicationTest(){
 }
 void codegenSumThirdsTest(){
     auto resi8 = sumthirds(operations<int8_t>{i8_seed});
-    auto ressi8 = sumthirds( operations<si8>{si8_seed});
+    auto ressi8 = sumthirds( operations<csi8>{si8_seed});
     ASSERT_EQUAL(resi8,promote_keep_signedness(ressi8));
 }
 void codegenSubtractionTest(){
     auto resi8 = sumnegative(operations<int8_t>{i8_seed});
-    auto ressi8 = sumnegative( operations<si8>{si8_seed});
+    auto ressi8 = sumnegative( operations<csi8>{si8_seed});
     ASSERT_EQUAL(resi8,promote_keep_signedness(ressi8));
 }
 
 namespace int16 {
 std::initializer_list<int16_t> i16_seed{1,1,2,3,5,8,13,21,34,55};
-std::initializer_list<pssodin::si16> si16_seed{1_csi16,1_csi16,2_csi16,3_csi16,5_csi16,8_csi16,13_csi16,21_csi16,34_csi16,55_csi16};
+std::initializer_list<pssodin::csi16> si16_seed{1_csi16,1_csi16,2_csi16,3_csi16,5_csi16,8_csi16,13_csi16,21_csi16,34_csi16,55_csi16};
 
 auto sum(operations<int16_t> const &ops){
     return ops.sum();
@@ -108,21 +108,21 @@ auto sumnegative(operations<int16_t> const &ops){
     return ops.sumnegative();
 }
 
-auto sum(operations<si16> const &ops){
+auto sum(operations<csi16> const &ops){
     return ops.sum();
 }
-auto product(operations<si16> const &ops){
+auto product(operations<csi16> const &ops){
     return ops.product();
 }
-auto sumthirds(operations<si16> const &&ops){
+auto sumthirds(operations<csi16> const &&ops){
     return ops.sumthirds();
 }
-auto sumnegative(operations<si16> const &ops){
+auto sumnegative(operations<csi16> const &ops){
     return ops.sumnegative();
 }
 void codegenAdditionTest() {
     auto resi16 = sum(operations<int16_t>{i16_seed});
-    auto ressi16 =sum( operations<si16>{si16_seed});
+    auto ressi16 =sum( operations<csi16>{si16_seed});
     ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 }
 
@@ -139,7 +139,7 @@ void codegenAdditionTest() {
 
 void codegenMultiplicationTest(){
     auto resi16 = product(operations<int16_t>{i16_seed});
-ASSERT_THROWS(   [[maybe_unused]] auto ressi16 = product( operations<si16>{si16_seed}); , char const *);
+ASSERT_THROWS(   [[maybe_unused]] auto ressi16 = product( operations<csi16>{si16_seed}); , char const *);
 //    ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 //    ASSERT_EQUAL(from_int(resi16),ressi16);
     ASSERTM("expect signed integer overflow not detected by ubsan",resi16 < 0);
@@ -149,19 +149,19 @@ ASSERT_THROWS(   [[maybe_unused]] auto ressi16 = product( operations<si16>{si16_
 }
 void codegenSumThirdsTest(){
     auto resi16 = sumthirds(operations<int16_t>{i16_seed});
-    auto ressi16 = sumthirds( operations<si16>{si16_seed});
+    auto ressi16 = sumthirds( operations<csi16>{si16_seed});
     ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 }
 void codegenSubtractionTest(){
     auto resi16 = sumnegative(operations<int16_t>{i16_seed});
-    auto ressi16 = sumnegative( operations<si16>{si16_seed});
+    auto ressi16 = sumnegative( operations<csi16>{si16_seed});
     ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 }
 
 }
 namespace int32 {
 std::initializer_list<int32_t> i32_seed{1,1,2,3,5,8,13,21,34,55,89};
-std::initializer_list<pssodin::si32> si32_seed{1_csi32,1_csi32,2_csi32,3_csi32,5_csi32,8_csi32,13_csi32,21_csi32,34_csi32,55_csi32,89_csi32};
+std::initializer_list<pssodin::csi32> si32_seed{1_csi32,1_csi32,2_csi32,3_csi32,5_csi32,8_csi32,13_csi32,21_csi32,34_csi32,55_csi32,89_csi32};
 
 auto sum(operations<int32_t> const &ops){
     return ops.sum();
@@ -176,27 +176,27 @@ auto sumnegative(operations<int32_t> const &ops){
     return ops.sumnegative();
 }
 
-auto sum(operations<si32> const &ops){
+auto sum(operations<csi32> const &ops){
     return ops.sum();
 }
-auto product(operations<si32> const &ops){
+auto product(operations<csi32> const &ops){
     return ops.product();
 }
-auto sumthirds(operations<si32> const &&ops){
+auto sumthirds(operations<csi32> const &&ops){
     return ops.sumthirds();
 }
-auto sumnegative(operations<si32> const &ops){
+auto sumnegative(operations<csi32> const &ops){
     return ops.sumnegative();
 }
 void codegenAdditionTest() {
     auto resi32 = sum(operations<int32_t>{i32_seed});
-    auto ressi32 =sum( operations<si32>{si32_seed});
+    auto ressi32 =sum( operations<csi32>{si32_seed});
     ASSERT_EQUAL(resi32,promote_keep_signedness(ressi32));
 }
 
 void codegenMultiplicationTest(){
     auto const resi32 = product(operations<int32_t> { i32_seed });
-    ASSERT_THROWS([[maybe_unused]] auto ressi32 = product( operations<si32>{si32_seed}); , char const *);
+    ASSERT_THROWS([[maybe_unused]] auto ressi32 = product( operations<csi32>{si32_seed}); , char const *);
 //    ASSERT_EQUAL(resi32,promote_keep_signedness(ressi32));
 //    ASSERT_EQUAL(from_int(resi32),ressi32);
     ASSERTM("expect signed integer overflow detected by ubsan",resi32 < 0);
@@ -206,12 +206,12 @@ void codegenMultiplicationTest(){
 }
 void codegenSumThirdsTest(){
     auto resi32 = sumthirds(operations<int32_t>{i32_seed});
-    auto ressi32 = sumthirds( operations<si32>{si32_seed});
+    auto ressi32 = sumthirds( operations<csi32>{si32_seed});
     ASSERT_EQUAL(resi32,promote_keep_signedness(ressi32));
 }
 void codegenSubtractionTest(){
     auto resi32 = sumnegative(operations<int32_t>{i32_seed});
-    auto ressi32 = sumnegative( operations<si32>{si32_seed});
+    auto ressi32 = sumnegative( operations<csi32>{si32_seed});
     ASSERT_EQUAL(resi32,promote_keep_signedness(ressi32));
 }
 
@@ -219,7 +219,7 @@ void codegenSubtractionTest(){
 namespace int64 {
 constexpr std::initializer_list<int64_t> i64_seed{1,1,2,3,5,8,13,21,34,55,89,
                                         144,233,377,610};
-constexpr std::initializer_list<pssodin::si64> si64_seed{1_csi64,1_csi64,2_csi64,3_csi64,5_csi64,8_csi64,13_csi64,21_csi64,34_csi64,55_csi64,89_csi64,
+constexpr std::initializer_list<pssodin::csi64> si64_seed{1_csi64,1_csi64,2_csi64,3_csi64,5_csi64,8_csi64,13_csi64,21_csi64,34_csi64,55_csi64,89_csi64,
     144_csi64,233_csi64,377_csi64,610_csi64};
 
 auto sum(operations<int64_t> const &ops){
@@ -235,27 +235,27 @@ auto sumnegative(operations<int64_t> const &ops){
     return ops.sumnegative();
 }
 
-auto sum(operations<si64> const &ops){
+auto sum(operations<csi64> const &ops){
     return ops.sum();
 }
-auto product(operations<si64> const &ops){
+auto product(operations<csi64> const &ops){
     return ops.product();
 }
-auto sumthirds(operations<si64> const &&ops){
+auto sumthirds(operations<csi64> const &&ops){
     return ops.sumthirds();
 }
-auto sumnegative(operations<si64> const &ops){
+auto sumnegative(operations<csi64> const &ops){
     return ops.sumnegative();
 }
 void codegenAdditionTest() {
     auto resi64 = sum(operations<int64_t>{i64_seed});
-    auto ressi64 =sum( operations<si64>{si64_seed});
+    auto ressi64 =sum( operations<csi64>{si64_seed});
     ASSERT_EQUAL(resi64,promote_keep_signedness(ressi64));
 }
 
 void codegenMultiplicationTest(){
     auto resi64 = product(operations<int64_t>{i64_seed});
-    ASSERT_THROWS([[maybe_unused]] auto ressi64 = product( operations<si64>{si64_seed}); , char const *);
+    ASSERT_THROWS([[maybe_unused]] auto ressi64 = product( operations<csi64>{si64_seed}); , char const *);
 //    ASSERT_EQUAL(resi64,promote_keep_signedness(ressi64));
 //    ASSERT_EQUAL(from_int(resi64),ressi64);
     ASSERTM("expect signed integer overflow detected by ubsan",resi64 < 0);
@@ -265,19 +265,19 @@ void codegenMultiplicationTest(){
 }
 void codegenSumThirdsTest(){
     auto resi64 = sumthirds(operations<int64_t>{i64_seed});
-    auto ressi64 = sumthirds( operations<si64>{si64_seed});
+    auto ressi64 = sumthirds( operations<csi64>{si64_seed});
     ASSERT_EQUAL(resi64,promote_keep_signedness(ressi64));
 }
 void codegenSubtractionTest(){
     auto resi64 = sumnegative(operations<int64_t>{i64_seed});
-    auto ressi64 = sumnegative( operations<si64>{si64_seed});
+    auto ressi64 = sumnegative( operations<csi64>{si64_seed});
     ASSERT_EQUAL(resi64,promote_keep_signedness(ressi64));
 }
 
 }
 namespace uint32 {
 std::initializer_list<uint32_t> ui32_seed{1,1,2,3,5,8,13,21,34,55,89};
-std::initializer_list<pssodin::ui32> uui32_seed{1_cui32,1_cui32,2_cui32,3_cui32,5_cui32,8_cui32,13_cui32,21_cui32,34_cui32,55_cui32,89_cui32};
+std::initializer_list<pssodin::cui32> uui32_seed{1_cui32,1_cui32,2_cui32,3_cui32,5_cui32,8_cui32,13_cui32,21_cui32,34_cui32,55_cui32,89_cui32};
 
 auto sum(operations<uint32_t> const &ops){
     return ops.sum();
@@ -292,37 +292,37 @@ auto sumnegative(operations<uint32_t> const &ops){
     return ops.sumnegative();
 }
 
-auto sum(operations<ui32> const &ops){
+auto sum(operations<cui32> const &ops){
     return ops.sum();
 }
-auto product(operations<ui32> const &ops){
+auto product(operations<cui32> const &ops){
     return ops.product();
 }
-auto sumthirds(operations<ui32> const &&ops){
+auto sumthirds(operations<cui32> const &&ops){
     return ops.sumthirds();
 }
-auto sumnegative(operations<ui32> const &ops){
+auto sumnegative(operations<cui32> const &ops){
     return ops.sumnegative();
 }
 void codegenAdditionTest() {
     auto reui32 = sum(operations<uint32_t>{ui32_seed});
-    auto resui32 =sum( operations<ui32>{uui32_seed});
+    auto resui32 =sum( operations<cui32>{uui32_seed});
     ASSERT_EQUAL(reui32,promote_keep_signedness(resui32));
 }
 
 void codegenMultiplicationTest(){
     [[maybe_unused]] auto reui32 = product(operations<uint32_t>{ui32_seed});
-    ASSERT_THROWS([[maybe_unused]] auto resui32 = product( operations<ui32>{uui32_seed}); , char const *);
+    ASSERT_THROWS([[maybe_unused]] auto resui32 = product( operations<cui32>{uui32_seed}); , char const *);
     //ASSERT_EQUAL(reui32,promote_keep_signedness(resui32));
 }
 void codegenSumThirdsTest(){
     auto reui32 = sumthirds(operations<uint32_t>{ui32_seed});
-    auto resui32 = sumthirds( operations<ui32>{uui32_seed});
+    auto resui32 = sumthirds( operations<cui32>{uui32_seed});
     ASSERT_EQUAL(reui32,promote_keep_signedness(resui32));
 }
 void codegenSubtractionTest(){
     [[maybe_unused]] auto reui32 = sumnegative(operations<uint32_t>{ui32_seed});
-    ASSERT_THROWS([[maybe_unused]] auto resui32 = sumnegative( operations<ui32>{uui32_seed}); , char const *);
+    ASSERT_THROWS([[maybe_unused]] auto resui32 = sumnegative( operations<cui32>{uui32_seed}); , char const *);
 //    ASSERT_EQUAL(reui32,promote_keep_signedness(resui32));
 }
 
