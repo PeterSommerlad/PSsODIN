@@ -14,7 +14,7 @@ A C++20 implementation of safe overflow detecting integers following MISRA C++ r
 An `#ifdef`ed C++17 implementation is available in branch C++17.
 
 
-You can play with it and observe code generation on [Compiler Explorer](https://godbolt.org/z/bhEG7854c).
+You can play with it and observe code generation on [Compiler Explorer](https://godbolt.org/z/33ac3Khar).
 
 
 It provides the following types in `namspace pssodin` and corresponding UDL operators in `namespace pssodin::literals`:
