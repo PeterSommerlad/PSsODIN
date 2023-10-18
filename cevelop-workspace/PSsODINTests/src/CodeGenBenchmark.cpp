@@ -126,20 +126,20 @@ void codegenAdditionTest() {
     ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 }
 
-#pragma GCC diagnostic push
-#if defined(__GNUG__)
-#if defined(__clang__)
-#pragma clang diagnostic ignored "-Wunused-variable"
-
-#else
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-#endif
+//#pragma GCC diagnostic push
+//#if defined(__GNUG__)
+//#if defined(__clang__)
+//#pragma clang diagnostic ignored "-Wunused-variable"
+//
+//#else
+//#pragma GCC diagnostic ignored "-Wunused-variable"
+//#endif
+//#endif
 
 
 void codegenMultiplicationTest(){
     auto resi16 = product(operations<int16_t>{i16_seed});
-ASSERT_THROWS(    auto ressi16 = product( operations<si16>{si16_seed}); , char const *);
+ASSERT_THROWS(   [[maybe_unused]] auto ressi16 = product( operations<si16>{si16_seed}); , char const *);
 //    ASSERT_EQUAL(resi16,promote_keep_signedness(ressi16));
 //    ASSERT_EQUAL(from_int(resi16),ressi16);
     ASSERTM("expect signed integer overflow not detected by ubsan",resi16 < 0);
@@ -196,7 +196,7 @@ void codegenAdditionTest() {
 
 void codegenMultiplicationTest(){
     auto const resi32 = product(operations<int32_t> { i32_seed });
-    ASSERT_THROWS(auto ressi32 = product( operations<si32>{si32_seed}); , char const *);
+    ASSERT_THROWS([[maybe_unused]] auto ressi32 = product( operations<si32>{si32_seed}); , char const *);
 //    ASSERT_EQUAL(resi32,promote_keep_signedness(ressi32));
 //    ASSERT_EQUAL(from_int(resi32),ressi32);
     ASSERTM("expect signed integer overflow detected by ubsan",resi32 < 0);
@@ -255,7 +255,7 @@ void codegenAdditionTest() {
 
 void codegenMultiplicationTest(){
     auto resi64 = product(operations<int64_t>{i64_seed});
-    ASSERT_THROWS(auto ressi64 = product( operations<si64>{si64_seed}); , char const *);
+    ASSERT_THROWS([[maybe_unused]] auto ressi64 = product( operations<si64>{si64_seed}); , char const *);
 //    ASSERT_EQUAL(resi64,promote_keep_signedness(ressi64));
 //    ASSERT_EQUAL(from_int(resi64),ressi64);
     ASSERTM("expect signed integer overflow detected by ubsan",resi64 < 0);
@@ -311,8 +311,8 @@ void codegenAdditionTest() {
 }
 
 void codegenMultiplicationTest(){
-    auto reui32 = product(operations<uint32_t>{ui32_seed});
-    ASSERT_THROWS(auto resui32 = product( operations<ui32>{uui32_seed}); , char const *);
+    [[maybe_unused]] auto reui32 = product(operations<uint32_t>{ui32_seed});
+    ASSERT_THROWS([[maybe_unused]] auto resui32 = product( operations<ui32>{uui32_seed}); , char const *);
     //ASSERT_EQUAL(reui32,promote_keep_signedness(resui32));
 }
 void codegenSumThirdsTest(){
@@ -321,13 +321,12 @@ void codegenSumThirdsTest(){
     ASSERT_EQUAL(reui32,promote_keep_signedness(resui32));
 }
 void codegenSubtractionTest(){
-    auto reui32 = sumnegative(operations<uint32_t>{ui32_seed});
-    ASSERT_THROWS(auto resui32 = sumnegative( operations<ui32>{uui32_seed}); , char const *);
+    [[maybe_unused]] auto reui32 = sumnegative(operations<uint32_t>{ui32_seed});
+    ASSERT_THROWS([[maybe_unused]] auto resui32 = sumnegative( operations<ui32>{uui32_seed}); , char const *);
 //    ASSERT_EQUAL(reui32,promote_keep_signedness(resui32));
 }
 
 }
-#pragma GCC diagnostic pop
 
 
 void testUBSanWithSignedOverflow(){
