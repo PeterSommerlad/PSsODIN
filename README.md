@@ -21,18 +21,17 @@ It provides the following types in `namspace pssodin` and corresponding UDL oper
 
 ```C++
 // unsigned
-enum class ui8;   auto a = 1_cui8;
-enum class ui16;  auto b = 2_cui16;
-enum class ui32;  auto c = 3_cui32;
-enum class ui64;  auto d = 4_cui64;
+enum class cui8;   auto a = 1_cui8;
+enum class cui16;  auto b = 2_cui16;
+enum class cui32;  auto c = 3_cui32;
+enum class cui64;  auto d = 4_cui64;
 // signed
-enum class si8;   auto e = 5_csi8;
-enum class si16;  auto f = 6_csi16;
-enum class si32;  auto g = 7_csi32;
-enum class si64;  auto h = 8_csi64;
+enum class csi8;   auto e = 5_csi8;
+enum class csi16;  auto f = 6_csi16;
+enum class csi32;  auto g = 7_csi32;
+enum class csi64;  auto h = 8_csi64;
 ```
 
-You can play around with it on compiler explorer starting soon... <!-- [here](https://godbolt.org/z/TvnrrEzEK)-->
 
 
 Some extra features:
