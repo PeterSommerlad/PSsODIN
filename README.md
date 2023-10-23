@@ -35,7 +35,7 @@ enum class csi64;  auto h = 8_csi64;
 
 
 Some extra features:
-* an output operator is defined and will output also `ui8` and `si8` as integer values.
+* an output operator is defined and will output also `cui8` and `csi8` as integer values.
 * The UDL operators check for range as well.
 * not recommended features:
    * `to_int(val)` promotes the safe integer val to built-in integer keeping its signedness
