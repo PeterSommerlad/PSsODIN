@@ -34,7 +34,7 @@ jobs:
         env:
           CC:   gcc
           CXX:  g++
-        run: cmake ${{github.workspace}}/cevelop-workspace/PSsODINwithStructTests/
+        run: cmake ${{github.workspace}}/cevelop-workspace/PSsODINwithStructTest/
         
       - name: Build
         working-directory: ${{github.workspace}}/build
