@@ -12,16 +12,16 @@ jobs:
         working-directory: ${{github.workspace}}/build
         shell: bash
         env:
-          CC:   gcc-10
-          CXX:  g++-10
+          CC:   gcc
+          CXX:  g++
         run: cmake ${{github.workspace}}/cevelop-workspace/PSsODINTests/
         
       - name: Build
         working-directory: ${{github.workspace}}/build
         shell: bash
         env:
-          CC:   gcc-10
-          CXX:  g++-10
+          CC:   gcc
+          CXX:  g++
         run: cmake --build . -- CXX_FLAGS="-std=c++20 -O2"
         
       - name: Test
