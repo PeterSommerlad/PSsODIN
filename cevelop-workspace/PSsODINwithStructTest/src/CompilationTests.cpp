@@ -1,20 +1,7 @@
-#include "pssodin.h"
-#include "cute.h"
-#include "ide_listener.h"
-#include "xml_listener.h"
-#include "cute_runner.h"
-#include "CodeGenBenchmark.h"
-#include "OverflowCheckedTests.h"
-#include "NonBuiltInOverflowDetectionTests.h"
-#include "TestForThrowingAsserts.h"
-#include <type_traits>
-#include <cstddef>
+#include "odins.h"
 
-
-
-using namespace pssodin::literals;
-
-static_assert(0x8000_cui16 == 32768_cui16);
+using namespace odins;
+using namespace odins::literals;
 
 namespace _testing {
 
@@ -25,7 +12,7 @@ from_int_compiles=false;
 
 template<typename FROM>
 constexpr bool
-from_int_compiles<FROM,std::void_t<decltype(pssodin::from_int(FROM{}))>> = true;
+from_int_compiles<FROM,std::void_t<decltype(odins::from_int(FROM{}))>> = true;
 
 static_assert(from_int_compiles<unsigned char>);
 static_assert(from_int_compiles<signed char>);
@@ -56,7 +43,8 @@ static_assert(! from_int_compiles<wchar_t>);
 static_assert(! from_int_compiles<char16_t>);
 static_assert(! from_int_compiles<char32_t>);
 
-using namespace pssodin;
+using namespace odins;
+using odins::detail_::promote_keep_signedness;
 
 static_assert(sizeof(long) == sizeof(long long)); // on my mac...
 static_assert(42_csi64 == from_int(42L));
@@ -68,24 +56,24 @@ static_assert(42_cui32 == from_int(42u));
 
 
 
-static_assert(detail_::is_safeint_v<cui8>);
-static_assert(detail_::is_safeint_v<cui16>);
-static_assert(detail_::is_safeint_v<cui32>);
-static_assert(detail_::is_safeint_v<cui64>);
-static_assert(detail_::is_safeint_v<csi8>);
-static_assert(detail_::is_safeint_v<csi16>);
-static_assert(detail_::is_safeint_v<csi32>);
-static_assert(detail_::is_safeint_v<csi64>);
+static_assert(detail_::is_overflowdetectingint_v<cui8>);
+static_assert(detail_::is_overflowdetectingint_v<cui16>);
+static_assert(detail_::is_overflowdetectingint_v<cui32>);
+static_assert(detail_::is_overflowdetectingint_v<cui64>);
+static_assert(detail_::is_overflowdetectingint_v<csi8>);
+static_assert(detail_::is_overflowdetectingint_v<csi16>);
+static_assert(detail_::is_overflowdetectingint_v<csi32>);
+static_assert(detail_::is_overflowdetectingint_v<csi64>);
 enum class enum4test{};
-static_assert(!detail_::is_safeint_v<enum4test>);
-static_assert(!detail_::is_safeint_v<std::byte>);
-static_assert(!detail_::is_safeint_v<int>);
+static_assert(!detail_::is_overflowdetectingint_v<enum4test>);
+static_assert(!detail_::is_overflowdetectingint_v<std::byte>);
+static_assert(!detail_::is_overflowdetectingint_v<int>);
 static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(1_cui8)+1)>);
 static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(2_cui16)+1)>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(1_csi8))>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(2_csi16))>);
-static_assert(std::is_same_v<uint8_t,std::underlying_type_t<cui8>>);
-static_assert(std::is_same_v<uint16_t,std::underlying_type_t<cui16>>);
+static_assert(std::is_same_v<uint8_t,ULT<cui8>>);
+static_assert(std::is_same_v<uint16_t,ULT<cui16>>);
 
 
 //static_assert(promote_keep_signedness(0xffff_cui16 * 0xffff_cui16) == 0x1u); // wraps
@@ -99,8 +87,8 @@ static_assert(std::is_same_v<uint16_t,std::underlying_type_t<cui16>>);
 //static_assert(-0x7fff'ffff_csi32 - 2_csi32 == 0x7fff'ffff_csi32);
 //static_assert(-0x7fff'ffff - 2); // doesn't compile, integer overflow
 
-static_assert(std::is_same_v<int,decltype(+to_underlying(42_cui8))>);
-static_assert(std::is_same_v<uint8_t,decltype(to_underlying(42_cui8))>);
+//static_assert(std::is_same_v<int,decltype(+to_underlying(42_cui8))>);
+//static_assert(std::is_same_v<uint8_t,decltype(to_underlying(42_cui8))>);
 
 static_assert(1_cui8 == from_int(uint8_t(1)));
 static_assert(42_csi8 == from_int_to<csi8>(42));
@@ -511,7 +499,7 @@ static_assert(100_csi32 / -9_csi64 == -11_csi64);
 
 
 namespace compile_checks {
-using namespace pssodin;
+using namespace odins;
 template<auto ...value>
 using consume_value = void;
 
@@ -621,7 +609,7 @@ static_assert(min_32 / vminus1_64 == 0x8000'0000_csi64 );
 check_does_compile(not,  csi32 , + min_32 / vminus1_32 +) // overflow detect
 check_does_compile(not,  csi32 , + min_32 / vminus1_16 +) // overflow detect
 check_does_compile(not,  csi32 , + min_32 / vminus1_8 +) // overflow detect
-static_assert(min_16 / vminus1_64 == -static_cast<csi64>(min_16)  );
+static_assert(min_16 / vminus1_64 == -static_cast<csi64>(static_cast<ULT<decltype(min_16)>>(min_16))  );
 static_assert(min_16 / vminus1_32 == 0x8000_csi32 );
 check_does_compile(not,  csi16 , + min_16 / vminus1_16 +) // overflow detect
 check_does_compile(not,  csi16 , + min_16 / vminus1_8 +) // overflow detect
@@ -693,11 +681,11 @@ static_assert(0_cui8  == (v1u_8  >> v1u_8));
 static_assert(0_cui16 == (v1u_16 >> v1u_8));
 static_assert(0_cui32 == (v1u_32 >> v1u_8));
 static_assert(0_cui64 == (v1u_64 >> v1u_8));
-check_does_compile(not,  cui8 , + maxu_8 >> 8_cui8 +) // overflow detect
-check_does_compile(not,  cui16 , + maxu_16 >> 16_cui8 +) // overflow detect
-check_does_compile(not,  cui32 , + maxu_32 >> 32_cui8 +) // overflow detect
-check_does_compile(not,  cui64 , + maxu_64 >> 64_cui8 +) // overflow detect
-check_does_compile(not,  cui64 , + maxu_64 >> maxu_64 +) // overflow detect
+check_does_compile(not,  cui8 , + (maxu_8 >> 8_cui8) +) // overflow detect
+check_does_compile(not,  cui16 , + (maxu_16 >> 16_cui8) +) // overflow detect
+check_does_compile(not,  cui32 , + (maxu_32 >> 32_cui8) +) // overflow detect
+check_does_compile(not,  cui64 , + (maxu_64 >> 64_cui8) +) // overflow detect
+check_does_compile(not,  cui64 , + (maxu_64 >> maxu_64) +) // overflow detect
 
 // the following does not compile due to signed integer overflow on 32bit int
 //static_assert(static_cast<uint16_t>(0xffffu)* static_cast<uint16_t>(0xffffu));
@@ -941,14 +929,6 @@ check_does_compile(    ,  cui8,  +  1_cui8  - 1_cui8  -) // same signedness
 check_does_compile(    ,  cui16, +  1_cui16 - 1_cui8  +) // same signedness
 check_does_compile(    ,  cui32, +  1_cui32 - 1_cui8  +) // same signedness
 check_does_compile(    ,  cui64, +  1_cui64 - 1_cui8  +) // same signedness
-
-
-}
-#undef check_does_compile
-#undef concat_line_impl
-#undef concat_line
-
-
 template<typename T, typename WHAT>
 constexpr bool
 isa = std::is_same_v<std::remove_cvref_t<T>,WHAT>;
@@ -975,524 +955,15 @@ template<typename T>
 constexpr bool
 is_integer = is_unsigned<T>||is_signed<T>;
 
-static_assert(is_integer<std::underlying_type_t<cui16>>);
+static_assert(is_integer<ULT<cui16>>);
 static_assert(!is_integer<cui16>);
-static_assert(is_integer<std::underlying_type_t<csi16>>);
+static_assert(is_integer<ULT<csi16>>);
 static_assert(!is_integer<csi16>);
 
 
-void signedIntegerBoundaryTestResultRecovery(){
-    // temporary testcase for getting static_asserts above right
-    ASSERT_EQUAL(0x8000'0000_csi64, max_32 + v1_64  );
-}
-
 
 }
-
-void si8preincrement(){
-    auto one = 1_csi8;
-    ASSERT_EQUAL(2_csi8,++one);
-}
-void si8postincrement(){
-    auto one = 1_csi8;
-    ASSERT_EQUAL(1_csi8,one++);
-    ASSERT_EQUAL(2_csi8,one);
-}
-void si8predecrement(){
-    auto one = 1_csi8;
-    ASSERT_EQUAL(0_csi8,--one);
-}
-void si8postdecrement(){
-    auto one = 1_csi8;
-    ASSERT_EQUAL(1_csi8,one--);
-    ASSERT_EQUAL(0_csi8,one);
-}
-void si16preincrement(){
-    auto one = 1_csi16;
-    ASSERT_EQUAL(2_csi16,++one);
-}
-void si16postincrement(){
-    auto one = 1_csi16;
-    ASSERT_EQUAL(1_csi16,one++);
-    ASSERT_EQUAL(2_csi16,one);
-}
-void si16predecrement(){
-    auto one = 1_csi16;
-    ASSERT_EQUAL(0_csi16,--one);
-}
-void si16postdecrement(){
-    auto one = 1_csi16;
-    ASSERT_EQUAL(1_csi16,one--);
-    ASSERT_EQUAL(0_csi16,one);
-}
-void si32preincrement(){
-    auto one = 1_csi32;
-    ASSERT_EQUAL(2_csi32,++one);
-}
-void si32postincrement(){
-    auto one = 1_csi32;
-    ASSERT_EQUAL(1_csi32,one++);
-    ASSERT_EQUAL(2_csi32,one);
-}
-void si32predecrement(){
-    auto one = 1_csi32;
-    ASSERT_EQUAL(0_csi32,--one);
-}
-void si32postdecrement(){
-    auto one = 1_csi32;
-    ASSERT_EQUAL(1_csi32,one--);
-    ASSERT_EQUAL(0_csi32,one);
-}
-void si64preincrement(){
-    auto one = 1_csi64;
-    ASSERT_EQUAL(2_csi64,++one);
-}
-void si64postincrement(){
-    auto one = 1_csi64;
-    ASSERT_EQUAL(1_csi64,one++);
-    ASSERT_EQUAL(2_csi64,one);
-}
-void si64predecrement(){
-    auto one = 1_csi64;
-    ASSERT_EQUAL(0_csi64,--one);
-}
-void si64postdecrement(){
-    auto one = 1_csi64;
-    ASSERT_EQUAL(1_csi64,one--);
-    ASSERT_EQUAL(0_csi64,one);
-}
-
-
-void ui8preincrement(){
-    auto one = 1_cui8;
-    ASSERT_EQUAL(2_cui8,++one);
-}
-void ui8postincrement(){
-    auto one = 1_cui8;
-    ASSERT_EQUAL(1_cui8,one++);
-    ASSERT_EQUAL(2_cui8,one);
-}
-void ui8predecrement(){
-    auto one = 1_cui8;
-    ASSERT_EQUAL(0_cui8,--one);
-}
-void ui8postdecrement(){
-    auto one = 1_cui8;
-    ASSERT_EQUAL(1_cui8,one--);
-    ASSERT_EQUAL(0_cui8,one);
-}
-void ui16preincrement(){
-    auto one = 1_cui16;
-    ASSERT_EQUAL(2_cui16,++one);
-}
-void ui16postincrement(){
-    auto one = 1_cui16;
-    ASSERT_EQUAL(1_cui16,one++);
-    ASSERT_EQUAL(2_cui16,one);
-}
-void ui16predecrement(){
-    auto one = 1_cui16;
-    ASSERT_EQUAL(0_cui16,--one);
-}
-void ui16postdecrement(){
-    auto one = 1_cui16;
-    ASSERT_EQUAL(1_cui16,one--);
-    ASSERT_EQUAL(0_cui16,one);
-}
-void ui32preincrement(){
-    auto one = 1_cui32;
-    ASSERT_EQUAL(2_cui32,++one);
-}
-void ui32postincrement(){
-    auto one = 1_cui32;
-    ASSERT_EQUAL(1_cui32,one++);
-    ASSERT_EQUAL(2_cui32,one);
-}
-void ui32predecrement(){
-    auto one = 1_cui32;
-    ASSERT_EQUAL(0_cui32,--one);
-}
-void ui32postdecrement(){
-    auto one = 1_cui32;
-    ASSERT_EQUAL(1_cui32,one--);
-    ASSERT_EQUAL(0_cui32,one);
-}
-void ui64preincrement(){
-    auto one = 1_cui64;
-    ASSERT_EQUAL(2_cui64,++one);
-}
-void ui64postincrement(){
-    auto one = 1_cui64;
-    ASSERT_EQUAL(1_cui64,one++);
-    ASSERT_EQUAL(2_cui64,one);
-}
-void ui64predecrement(){
-    auto one = 1_cui64;
-    ASSERT_EQUAL(0_cui64,--one);
-}
-void ui64postdecrement(){
-    auto one = 1_cui64;
-    ASSERT_EQUAL(1_cui64,one--);
-    ASSERT_EQUAL(0_cui64,one);
-}
-void ui16intExists() {
-    using pssodin::cui16;
-    auto large=0xff00_cui16;
-    //0x10000_cui16; // compile error
-    //ui16{0xfffff}; // narrowing detection
-    ASSERT_EQUAL(cui16{0xff00u},large);
-}
-
-void ui16NotEqualAutomaticInCpp20(){
-    ASSERT(0xf_cui16 != 0_cui16);
-}
-
-void ui16canbeadded(){
-    ASSERT_EQUAL(100_cui16,75_cui16+25_cui16);
-}
-
-void ui16canbeaddedto(){
-    auto l = 42_cui16;
-    l += 8_cui8;
-    //l += 1_cui32; // compile error
-    ASSERT_EQUAL(50_cui16,l);
-}
-
-void ui16canbesubtracted(){
-    ASSERT_EQUAL(50_cui16,75_cui16-25_cui16);
-}
-
-void ui16canbesubtractedfrom(){
-    auto l = 42_cui16;
-    l -= 8_cui8;
-    //l -= 1_cui32; // compile error
-    ASSERT_EQUAL(34_cui16,l);
-}
-
-void ui16canbemultiplied(){
-    ASSERT_EQUAL(1875_cui16,75_cui16*25_cui16);
-}
-
-void ui16canbemultipliedwith(){
-    auto l = 42_cui16;
-    l *= 8_cui8;
-    //l -= 1_cui32; // compile error
-    ASSERT_EQUAL(336_cui16,l);
-}
-
-
-void ui16canbedivided(){
-    ASSERT_EQUAL(3_cui16,75_cui16/25_cui16);
-}
-
-void ui16canbedividedby(){
-    auto l = 42_cui16;
-    l /= 7_cui8;
-    //l /= 1_cui32; // compile error
-    ASSERT_EQUAL(6_cui16,l);
-}
-
-void ui16canbemoduloed(){
-    ASSERT_EQUAL(10_cui16,75_cui16%13_cui16);
-}
-
-void ui16canbemoduloedby(){
-    auto l = 42_cui16;
-    l %= 13_cui8;
-    //l %= 1_cui32; // compile error
-    ASSERT_EQUAL(3_cui16,l);
-}
-
-
-void ui16canbeanded(){
-    ASSERT_EQUAL(0X0AA0_cui16,0x0ff0_cui16 & 0xAAAA_cui16);
-}
-
-void ui16canbeandedwith(){
-    auto l = 0xff00_cui16;
-    l &= 0xABCD_cui16;
-    //l &= 1_cui8; // compile error
-    ASSERT_EQUAL(0xAB00_cui16,l);
-}
-
-void ui16canbeored(){
-    ASSERT_EQUAL(0XAFFA_cui16,0x0ff0_cui16 | 0xAAAA_cui16);
-}
-
-void ui16canbeoredwith(){
-    auto l = 0xff00_cui16;
-    l |= 0xABCD_cui16;
-    //l |= 1_cui8; // compile error
-    ASSERT_EQUAL(0xFFCD_cui16,l);
-}
-
-void ui16canbexored(){
-    ASSERT_EQUAL(0XA55A_cui16,0x0ff0_cui16 ^ 0xAAAA_cui16);
-}
-
-void ui16canbexoredwith(){
-    auto l = 0xff00_cui16;
-    l ^= 0xABCD_cui16;
-    //l ^= 1_cui8; // compile error
-    ASSERT_EQUAL(0x54CD_cui16,l);
-}
-
-void ui16canbenegated(){
-    ASSERT_EQUAL(0XA55A_cui16, ~0x5AA5_cui16 );
-}
-
-void ui16canbeleftshifted(){
-    //constexpr auto l = 0x1_cui16 << 16_cui8; // compile error
-    ASSERT_EQUAL(0XFF00_cui16,0x0ff0_cui16 << 0x4_cui8);
-}
-
-void ui16canbeleftshiftedby(){
-    auto l = 0x00ff_cui16;
-    l <<= 4_cui16;
-    ASSERT_EQUAL(0x0FF0_cui16,l);
-}
-void ui16canberightshifted(){
-    //constexpr auto l = 0x1_cui16 << 16_cui8; // compile error
-    ASSERT_EQUAL(0X00FF_cui16,0x0ff0_cui16 >> 0x4_cui8);
-}
-
-void ui16canberightshiftedby(){
-    auto l = 0x00ff_cui16;
-    l >>= 4_cui16;
-    ASSERT_EQUAL(0x0F_cui16,l);
-}
-void ui16canbepreincremented(){
-    auto l = 0x00ff_cui16;
-    ASSERT_EQUAL(0x100_cui16,++l);
-    ASSERT_EQUAL(0x100_cui16,l);
-}
-void ui16canbepostincremented(){
-    auto l = 0x00ff_cui16;
-    ASSERT_EQUAL(0x00ff_cui16,l++);
-    ASSERT_EQUAL(0x100_cui16,l);
-}
-void ui16canbepredecremented(){
-    auto l = 0x00ff_cui16;
-    ASSERT_EQUAL(0x100_cui16,++l);
-    ASSERT_EQUAL(0x100_cui16,l);
-}
-void ui16canbepostdecremented(){
-    auto l = 0x00ff_cui16;
-    ASSERT_EQUAL(0x00ff_cui16,l++);
-    ASSERT_EQUAL(0x100_cui16,l);
-}
-
-void ui16canbecompared(){
-    auto l = 0x00ff_cui16;
-    auto s = 0x000f_cui16;
-
-	ASSERTM("check comparison", l != s && s < l && l >= s && !(l < s) && ! (l <= s));
-}
-
-void ui16canNotbecomparedwithui8() {
-    auto l = 0x00ff_cui16;
-    auto s = 0x000f_cui8;
-
-
-//    ASSERTM("check comparison", l != s && s < l && l >= s && !(l < s) && ! (l <= s));
-
-    auto ss = s + 0_cui16;
-    ASSERTM("check comparison", l != ss && ss < l && l >= ss && !(l < ss) && ! (l <= ss));
-}
-
-void ui32CanNotbeComparedwithlong(){
-    auto l = 0x00ff_cui32;
-    auto s = std::uint32_t{0x000fU};
-
-
-//    ASSERTM("check comparison", l != s && s < l && l >= s && !(l < s) && ! (l <= s));
-
-    auto ss = pssodin::from_int(s);
-    ASSERTM("check comparison", l != ss && ss < l && l >= ss && !(l < ss) && ! (l <= ss));
-
-}
-
-
-// signed test to check if result is correct (overflow wraps)
-
-void si8canbeaddednormal(){
-    ASSERT_EQUAL(42_csi8, 21_csi8 + 21_csi8);
-}
-
-void si8Negation(){
-    ASSERT_EQUAL(-1,promote_keep_signedness(-1_csi8));
-}
-
-void si8negationminintthrows(){
-    ASSERT_THROWS(std::ignore = -(std::numeric_limits<pssodin::csi8>::min()), char const *);
-}
-
-void si8overflowIsDetected(){
-    ASSERT_THROWS(std::ignore = 127_csi8+2_csi8, char const *);
-}
-
-void si8subtraction(){
-    ASSERT_EQUAL(-1_csi8,2_csi8-3_csi8);
-}
-
-void si8subtractionoverflowdetected(){
-    try {
-    ASSERT_THROWS(std::ignore = ((-2_csi8)-127_csi8) , char const *);
-    } catch(...){}
-}
-void si8multiplication(){
-    ASSERT_EQUAL(120_csi8 , 3_csi8 * 40_csi8);
-}
-void si8division(){
-    ASSERT_EQUAL(3_csi8 , 120_csi8 / 40_csi8);
-}
-
-void si8OutputAsInteger(){
-    std::ostringstream out{};
-    out << 42_csi8;
-    ASSERT_EQUAL("42",out.str());
-}
-
-void ui8OutputAsInteger(){
-    std::ostringstream out{};
-    out << 42_cui8;
-    ASSERT_EQUAL("42",out.str());
-}
-
-void checkedFromInt(){
-    using namespace pssodin;
-    ASSERT_THROWS(std::ignore = from_int_to<cui8>(2400u), char const *);
-
-}
-
-
-
-
-namespace cppnowtalk{
-
-void testUBforint() {
-    std::ostringstream out{};
-    out << 65535 * 32768 << '\n';
-    // prints: 2147450880
-#pragma GCC diagnostic push
-#ifdef __clang__
-    #pragma clang diagnostic ignored "-Winteger-overflow"
-#else
-    #pragma GCC diagnostic ignored "-Woverflow"
-#endif
-    out << 65536 * 32768 << '\n';
-    //../src/Test.cpp:421:18: error: integer overflow in expression of type 'int' results in '-2147483648' [-Werror=overflow]
-#pragma GCC diagnostic pop
-    // prints: ?
-    out << std::boolalpha << std::numeric_limits<int>::is_modulo << '\n';
-    ASSERT_EQUAL("2147450880\n-2147483648\nfalse\n",out.str());
-}
-void testNoUBforunsigned() {
-    std::ostringstream out{};
-    out << 65535u * 32768u << '\n';
-    // prints: 2147450880
-    out << 65536u * 32768u << '\n';
-    // prints: 2147483648
-
-    out << 65536u * 32768u * 2u << '\n';
-    // prints: ?
-    out << std::boolalpha << std::numeric_limits<unsigned>::is_modulo << '\n';
-    ASSERT_EQUAL("2147450880\n2147483648\n0\ntrue\n",out.str());
-}
-}
-
-bool runAllTests(int argc, char const *argv[]) {
-    cute::suite TestForThrowingAsserts = make_suite_TestForThrowingAsserts();
-    TestForThrowingAsserts.push_back(CUTE(cppnowtalk::testUBforint));
-    TestForThrowingAsserts.push_back(CUTE(cppnowtalk::testNoUBforunsigned));
-
-    cute::suite s { };
-
-    s.push_back(CUTE(ui16intExists));
-    s.push_back(CUTE(ui16NotEqualAutomaticInCpp20));
-    s.push_back(CUTE(ui16canbeadded));
-    s.push_back(CUTE(ui16canbeaddedto));
-    s.push_back(CUTE(ui16canbesubtracted));
-    s.push_back(CUTE(ui16canbesubtractedfrom));
-    s.push_back(CUTE(ui16canbemultiplied));
-    s.push_back(CUTE(ui16canbemultipliedwith));
-    s.push_back(CUTE(ui16canbedivided));
-    s.push_back(CUTE(ui16canbedividedby));
-    s.push_back(CUTE(ui16canbemoduloed));
-    s.push_back(CUTE(ui16canbemoduloedby));
-    s.push_back(CUTE(ui16canbeandedwith));
-    s.push_back(CUTE(ui16canbeanded));
-    s.push_back(CUTE(ui16canbeored));
-    s.push_back(CUTE(ui16canbeoredwith));
-    s.push_back(CUTE(ui16canbexoredwith));
-    s.push_back(CUTE(ui16canbexored));
-    s.push_back(CUTE(ui16canbenegated));
-    s.push_back(CUTE(ui16canbeleftshifted));
-    s.push_back(CUTE(ui16canbeleftshiftedby));
-    s.push_back(CUTE(ui16canberightshifted));
-    s.push_back(CUTE(ui16canberightshiftedby));
-    s.push_back(CUTE(si8canbeaddednormal));
-    s.push_back(CUTE(si8Negation));
-    s.push_back(CUTE(si8negationminintthrows));
-    s.push_back(CUTE(si8overflowIsDetected));
-    s.push_back(CUTE(si8subtraction));
-    s.push_back(CUTE(si8subtractionoverflowdetected));
-    s.push_back(CUTE(si8multiplication));
-    s.push_back(CUTE(si8division));
-    s.push_back(CUTE(ui16canbepreincremented));
-    s.push_back(CUTE(ui16canbepostincremented));
-    s.push_back(CUTE(ui16canbepredecremented));
-    s.push_back(CUTE(ui16canbepostdecremented));
-	s.push_back(CUTE(checkedFromInt));
-	s.push_back(CUTE(si8OutputAsInteger));
-	s.push_back(CUTE(ui8OutputAsInteger));
-	s.push_back(CUTE(ui16canbecompared));
-	s.push_back(CUTE(ui16canNotbecomparedwithui8));
-	s.push_back(CUTE(ui32CanNotbeComparedwithlong));
-	s.push_back(CUTE(_testing::signedIntegerBoundaryTestResultRecovery));
-    s.push_back(CUTE(si8preincrement));
-    s.push_back(CUTE(si8postincrement));
-    s.push_back(CUTE(si8predecrement));
-    s.push_back(CUTE(si8postdecrement));
-    s.push_back(CUTE(si16preincrement));
-    s.push_back(CUTE(si16postincrement));
-    s.push_back(CUTE(si16predecrement));
-    s.push_back(CUTE(si16postdecrement));
-    s.push_back(CUTE(si32preincrement));
-    s.push_back(CUTE(si32postincrement));
-    s.push_back(CUTE(si32predecrement));
-    s.push_back(CUTE(si32postdecrement));
-    s.push_back(CUTE(si64preincrement));
-    s.push_back(CUTE(si64postincrement));
-    s.push_back(CUTE(si64predecrement));
-    s.push_back(CUTE(si64postdecrement));
-    s.push_back(CUTE(ui8preincrement));
-    s.push_back(CUTE(ui8postincrement));
-    s.push_back(CUTE(ui8predecrement));
-    s.push_back(CUTE(ui8postdecrement));
-    s.push_back(CUTE(ui16preincrement));
-    s.push_back(CUTE(ui16postincrement));
-    s.push_back(CUTE(ui16predecrement));
-    s.push_back(CUTE(ui16postdecrement));
-    s.push_back(CUTE(ui32preincrement));
-    s.push_back(CUTE(ui32postincrement));
-    s.push_back(CUTE(ui32predecrement));
-    s.push_back(CUTE(ui32postdecrement));
-    s.push_back(CUTE(ui64preincrement));
-    s.push_back(CUTE(ui64postincrement));
-    s.push_back(CUTE(ui64predecrement));
-    s.push_back(CUTE(ui64postdecrement));
-	cute::xml_file_opener xmlfile(argc, argv);
-    cute::xml_listener<cute::ide_listener<>> lis(xmlfile.out);
-    auto runner = cute::makeRunner(lis, argc, argv);
-    bool success = runner(s, "AllTests");
-    success = runner(make_suite_CodeGenBenchmark(),"CodeGenBenchmark") && success;
-    success &= runner(TestForThrowingAsserts, "TestForThrowingAsserts");
-    cute::suite OverflowCheckedTests = make_suite_OverflowCheckedTests();
-    success &= runner(OverflowCheckedTests, "OverflowCheckedTests");
-    return success;
-}
-
-int main(int argc, char const *argv[]) {
-    return runAllTests(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
+#undef check_does_compile
+#undef concat_line_impl
+#undef concat_line
 }

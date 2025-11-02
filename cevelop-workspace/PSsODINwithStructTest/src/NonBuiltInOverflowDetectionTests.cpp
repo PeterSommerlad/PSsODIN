@@ -1,9 +1,9 @@
-#include "pssodin.h"
+#include "odins.h"
 #include "NonBuiltInOverflowDetectionTests.h"
 #include "cute.h"
 
 
-using namespace pssodin::non_builtin;
+using namespace odins::detail_::non_builtin;
 
 template<typename INT>
 struct testSignedAddOverflow{

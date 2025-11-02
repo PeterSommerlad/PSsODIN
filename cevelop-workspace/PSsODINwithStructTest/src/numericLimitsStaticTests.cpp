@@ -1,4 +1,4 @@
-#include "pssodin.h"
+#include "odins.h"
 
 // this file content is generated
 // it tests all numeric limits members of all integer replacement types against their corresponding underlying types
@@ -29,7 +29,7 @@ done
 done
 
 */
-using namespace pssodin;
+using namespace odins;
 
 static_assert(std::numeric_limits<csi8>::min() == from_int(std::numeric_limits<ULT<csi8>>::min()) );
 static_assert(std::numeric_limits<csi8>::max() == from_int(std::numeric_limits<ULT<csi8>>::max()) );
