@@ -30,8 +30,7 @@ Any operation that overflows, also for unsigned types, will generate a run-time 
 * Negating the minimal signed value.
 * Division by zero.
 
-You can play with it and observe code generation on [Compiler Explorer enum](https://godbolt.org/z/33ac3Khar) or [class-based](https://godbolt.org/z/djcxTbr9e)
-
+You can play with it and observe code generation on [Compiler Explorer enum](https://godbolt.org/z/33ac3Khar) 
 
 It provides the following types in `namspace pssodin` and corresponding UDL operators in `namespace pssodin::literals`:
 
@@ -49,6 +48,8 @@ enum class csi64;  auto h = 8_csi64;
 ```
 
 The class-based implementation `odins.h` benefits from having checking constructors for explicit conversion from all sized integer types and uses the same class names and suffixes in `namespace odins` and `namespace odins::literals`.
+
+You can play with it and observe code generation on [Compiler Explorer class-based](https://godbolt.org/z/djcxTbr9e)
 
 
 Some extra features:
