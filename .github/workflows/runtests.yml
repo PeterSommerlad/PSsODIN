@@ -28,8 +28,11 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: ctest --output-on-failure
         
+      - name: create build directory
+        run: mkdir -p -v ${{github.workspace}}/build2
+
       - name: Configure CMake
-        working-directory: ${{github.workspace}}/build
+        working-directory: ${{github.workspace}}/build2
         shell: bash
         env:
           CC:   gcc
@@ -37,7 +40,7 @@ jobs:
         run: cmake ${{github.workspace}}/cevelop-workspace/PSsODINwithStructTest/
         
       - name: Build
-        working-directory: ${{github.workspace}}/build
+        working-directory: ${{github.workspace}}/build2
         shell: bash
         env:
           CC:   gcc
@@ -45,6 +48,6 @@ jobs:
         run: cmake --build . -- CXX_FLAGS="-std=c++20 -O2"
         
       - name: Test
-        working-directory: ${{github.workspace}}/build
+        working-directory: ${{github.workspace}}/build2
         run: ctest --output-on-failure
 
