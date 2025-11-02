@@ -30,7 +30,7 @@ Any operation that overflows, also for unsigned types, will generate a run-time 
 * Negating the minimal signed value.
 * Division by zero.
 
-You can play with it and observe code generation on [Compiler Explorer](https://godbolt.org/z/33ac3Khar).
+You can play with it and observe code generation on [Compiler Explorer enum](https://godbolt.org/z/33ac3Khar) or [class-based](https://godbolt.org/z/djcxTbr9e)
 
 
 It provides the following types in `namspace pssodin` and corresponding UDL operators in `namespace pssodin::literals`:
