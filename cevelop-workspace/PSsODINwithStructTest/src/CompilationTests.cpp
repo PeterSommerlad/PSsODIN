@@ -590,8 +590,8 @@ check_does_compile(not,  cui32 , + 0_cui32 - v1u_32 +) //  overflow detect
 check_does_compile(not,  cui32 , + 0_cui32 - v1u_16 +) //  overflow detect
 check_does_compile(not,  cui32 , + 0_cui32 - v1u_8 +) //  overflow detect
 check_does_compile(not,  cui16 , + 0_cui16 - v1u_16 +) //  overflow detect
-check_does_compile(not,  cui16 , + 0_cui16 - v1u_16 +) //  overflow detect
-check_does_compile(not,  cui16 , + 0_cui16 - v1u_16 +) //  overflow detect
+check_does_compile(not,  cui16 , + 0_cui16 - v1u_32 +) //  overflow detect
+check_does_compile(not,  cui16 , + 0_cui16 - v1u_64 +) //  overflow detect
 check_does_compile(not,  cui16 , + 0_cui16 - v1u_8 +) //  overflow detect
 check_does_compile(not,  cui8 , + 0_cui8 - v1u_64 +) //  overflow detect
 check_does_compile(not,  cui8 , + 0_cui8 - v1u_32 +) //  overflow detect
