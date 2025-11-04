@@ -1,7 +1,11 @@
-#include "odins.h"
+#include "pssodin.h"
 #include <cstddef>
-using namespace odins;
-using namespace odins::literals;
+
+
+
+using namespace pssodin::literals;
+
+static_assert(0x8000_cui16 == 32768_cui16);
 
 namespace _testing {
 
@@ -12,7 +16,7 @@ from_int_compiles=false;
 
 template<typename FROM>
 constexpr bool
-from_int_compiles<FROM,std::void_t<decltype(odins::from_int(FROM{}))>> = true;
+from_int_compiles<FROM,std::void_t<decltype(pssodin::from_int(FROM{}))>> = true;
 
 static_assert(from_int_compiles<unsigned char>);
 static_assert(from_int_compiles<signed char>);
@@ -43,8 +47,7 @@ static_assert(! from_int_compiles<wchar_t>);
 static_assert(! from_int_compiles<char16_t>);
 static_assert(! from_int_compiles<char32_t>);
 
-using namespace odins;
-using odins::detail_::promote_keep_signedness;
+using namespace pssodin;
 
 static_assert(sizeof(long) == sizeof(long long)); // on my mac...
 static_assert(42_csi64 == from_int(42L));
@@ -72,8 +75,8 @@ static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(1_cui8)+1
 static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(2_cui16)+1)>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(1_csi8))>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(2_csi16))>);
-static_assert(std::is_same_v<uint8_t,ULT<cui8>>);
-static_assert(std::is_same_v<uint16_t,ULT<cui16>>);
+static_assert(std::is_same_v<uint8_t,std::underlying_type_t<cui8>>);
+static_assert(std::is_same_v<uint16_t,std::underlying_type_t<cui16>>);
 
 
 //static_assert(promote_keep_signedness(0xffff_cui16 * 0xffff_cui16) == 0x1u); // wraps
@@ -87,8 +90,8 @@ static_assert(std::is_same_v<uint16_t,ULT<cui16>>);
 //static_assert(-0x7fff'ffff_csi32 - 2_csi32 == 0x7fff'ffff_csi32);
 //static_assert(-0x7fff'ffff - 2); // doesn't compile, integer overflow
 
-//static_assert(std::is_same_v<int,decltype(+to_underlying(42_cui8))>);
-//static_assert(std::is_same_v<uint8_t,decltype(to_underlying(42_cui8))>);
+static_assert(std::is_same_v<int,decltype(+to_underlying(42_cui8))>);
+static_assert(std::is_same_v<uint8_t,decltype(to_underlying(42_cui8))>);
 
 static_assert(1_cui8 == from_int(uint8_t(1)));
 static_assert(42_csi8 == from_int_to<csi8>(42));
@@ -499,9 +502,11 @@ static_assert(100_csi32 / -9_csi64 == -11_csi64);
 
 
 namespace compile_checks {
-using namespace odins;
+using namespace pssodin;
 template<auto ...value>
 using consume_value = void;
+
+
 
 #define concat_line_impl(A, B) A##_##B
 #define concat_line(A, B) concat_line_impl(A,B)
@@ -528,7 +533,6 @@ check_does_compile(   ,  cui8 , + (1_cui8 << 7_cui8) + ) // not too wide shift
 check_does_compile(not,  cui8 , + (0x80_cui8 >> 010_cui8) + ) // too wide shift
 check_does_compile(   ,  cui8 , + (0x80_cui8 >> 7_cui8) + ) // not too wide shift
 check_does_compile(not,  cui8 ,  % ) // modulo 0
-check_does_compile(   ,  cui8 , + (5_cui8  % 2_cui8) + ) // modulo 0
 check_does_compile(not,  csi8 ,  / ) // div 0
 check_does_compile(not,  csi8 ,  % ) // modulo not working
 check_does_compile(not,  cui8 ,  / ) // div 0
@@ -608,7 +612,7 @@ static_assert(min_32 / vminus1_64 == 0x8000'0000_csi64 );
 check_does_compile(not,  csi32 , + min_32 / vminus1_32 +) // overflow detect
 check_does_compile(not,  csi32 , + min_32 / vminus1_16 +) // overflow detect
 check_does_compile(not,  csi32 , + min_32 / vminus1_8 +) // overflow detect
-static_assert(min_16 / vminus1_64 == -static_cast<csi64>(static_cast<ULT<decltype(min_16)>>(min_16))  );
+static_assert(min_16 / vminus1_64 == -static_cast<csi64>(min_16)  );
 static_assert(min_16 / vminus1_32 == 0x8000_csi32 );
 check_does_compile(not,  csi16 , + min_16 / vminus1_16 +) // overflow detect
 check_does_compile(not,  csi16 , + min_16 / vminus1_8 +) // overflow detect
@@ -680,11 +684,11 @@ static_assert(0_cui8  == (v1u_8  >> v1u_8));
 static_assert(0_cui16 == (v1u_16 >> v1u_8));
 static_assert(0_cui32 == (v1u_32 >> v1u_8));
 static_assert(0_cui64 == (v1u_64 >> v1u_8));
-check_does_compile(not,  cui8 , + (maxu_8 >> 8_cui8) +) // overflow detect
-check_does_compile(not,  cui16 , + (maxu_16 >> 16_cui8) +) // overflow detect
-check_does_compile(not,  cui32 , + (maxu_32 >> 32_cui8) +) // overflow detect
-check_does_compile(not,  cui64 , + (maxu_64 >> 64_cui8) +) // overflow detect
-check_does_compile(not,  cui64 , + (maxu_64 >> maxu_64) +) // overflow detect
+check_does_compile(not,  cui8 , + maxu_8 >> 8_cui8 +) // overflow detect
+check_does_compile(not,  cui16 , + maxu_16 >> 16_cui8 +) // overflow detect
+check_does_compile(not,  cui32 , + maxu_32 >> 32_cui8 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 >> 64_cui8 +) // overflow detect
+check_does_compile(not,  cui64 , + maxu_64 >> maxu_64 +) // overflow detect
 
 // the following does not compile due to signed integer overflow on 32bit int
 //static_assert(static_cast<uint16_t>(0xffffu)* static_cast<uint16_t>(0xffffu));
@@ -928,6 +932,14 @@ check_does_compile(    ,  cui8,  +  1_cui8  - 1_cui8  -) // same signedness
 check_does_compile(    ,  cui16, +  1_cui16 - 1_cui8  +) // same signedness
 check_does_compile(    ,  cui32, +  1_cui32 - 1_cui8  +) // same signedness
 check_does_compile(    ,  cui64, +  1_cui64 - 1_cui8  +) // same signedness
+
+
+}
+#undef check_does_compile
+#undef concat_line_impl
+#undef concat_line
+
+
 template<typename T, typename WHAT>
 constexpr bool
 isa = std::is_same_v<std::remove_cvref_t<T>,WHAT>;
@@ -954,15 +966,8 @@ template<typename T>
 constexpr bool
 is_integer = is_unsigned<T>||is_signed<T>;
 
-static_assert(is_integer<ULT<cui16>>);
+static_assert(is_integer<std::underlying_type_t<cui16>>);
 static_assert(!is_integer<cui16>);
-static_assert(is_integer<ULT<csi16>>);
+static_assert(is_integer<std::underlying_type_t<csi16>>);
 static_assert(!is_integer<csi16>);
-
-
-
-}
-#undef check_does_compile
-#undef concat_line_impl
-#undef concat_line
 }

@@ -20,7 +20,7 @@
 #endif
 
 #define ps_assert( cond, msg) \
-   if (not (cond)) { PSSODIN_RAISE_SIGFPE() ; throw(#msg); } ;
+   if (not (cond)) { PSSODIN_RAISE_SIGFPE() ; throw(msg); } ;
 
 // no NDEBUG-like support, because we want safety!
 
@@ -146,11 +146,11 @@ concept a_scoped_enum = is_scoped_enum_v<T>;
 
 template<typename T>
 constexpr bool
-is_safeint_v = false;
+is_overflowdetectingint_v = false;
 
 template<a_scoped_enum E>
 constexpr bool
-is_safeint_v<E> = requires { E{} == E::pssodin_tag_to_prevent_mixing_other_enums; } ;
+is_overflowdetectingint_v<E> = requires { E{} == E::pssodin_tag_to_prevent_mixing_other_enums; } ;
 
 
 
@@ -159,7 +159,7 @@ is_safeint_v<E> = requires { E{} == E::pssodin_tag_to_prevent_mixing_other_enums
 template<typename E>
 using ULT=std::conditional_t<std::is_enum_v<plain<E>>,std::underlying_type_t<plain<E>>,plain<E>>;
 template<typename E>
-concept a_safeint = detail_::is_safeint_v<E>;
+concept an_overflowdetectingint = detail_::is_overflowdetectingint_v<E>;
 
 namespace detail_ {
 template<typename E>
@@ -182,7 +182,7 @@ namespace std {
 
 
 
-template<pssodin::a_safeint type>
+template<pssodin::an_overflowdetectingint type>
   struct numeric_limits<type>
   {
     using ult = pssodin::ULT<type>;
@@ -252,7 +252,7 @@ namespace pssodin{
 
 namespace detail_{
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr bool
 same_signedness_v = std::numeric_limits<LEFT>::is_signed == std::numeric_limits<RIGHT>::is_signed;
 
@@ -294,7 +294,7 @@ is_known_integer_v =    is_compatible_integer_v<std::uint8_t,  TESTED>
 template<typename LEFT, typename RIGHT>
 concept same_signedness = detail_::same_signedness_v<LEFT,RIGHT>;
 
-template<a_safeint E>
+template<an_overflowdetectingint E>
 [[nodiscard]]
 constexpr auto
 promote_keep_signedness(E val) noexcept
@@ -303,7 +303,7 @@ promote_keep_signedness(E val) noexcept
 }
 
 // not used in framework:
-template<a_safeint E>
+template<an_overflowdetectingint E>
 [[nodiscard]]
 constexpr auto
 to_underlying(E val) noexcept 
@@ -311,7 +311,7 @@ to_underlying(E val) noexcept
     return static_cast<std::underlying_type_t<E>>(val);
 }
 
-template<a_safeint E>
+template<an_overflowdetectingint E>
 [[nodiscard]]
 constexpr auto
 promote_to_unsigned(E val) noexcept
@@ -486,7 +486,7 @@ constexpr bool mul_overflow(T l, T r, T* result) noexcept {
 
 
 
-template<sized_integer TARGET, a_safeint E>
+template<sized_integer TARGET, an_overflowdetectingint E>
 [[nodiscard]]
 constexpr auto
 promote_and_extend_to_unsigned(E val) noexcept
@@ -496,7 +496,7 @@ promote_and_extend_to_unsigned(E val) noexcept
        using s_result_t = std::make_signed_t<u_result_t>;
        return static_cast<u_result_t>(static_cast<s_result_t>(promote_keep_signedness(val)));// promote with sign extension
 }
-template<sized_integer TARGET, a_safeint E>
+template<sized_integer TARGET, an_overflowdetectingint E>
 [[nodiscard]]
 constexpr auto
 abs_promoted_and_extended_as_unsigned(E val) noexcept
@@ -536,7 +536,7 @@ from_int(T val) noexcept {
     return static_cast<result_t>(val); // no need to check, result_t corresponds to input T's range
 }
 // path tests are compile-time checked:
-template<a_safeint TO, sized_integer FROM>
+template<an_overflowdetectingint TO, sized_integer FROM>
 [[nodiscard]]
 constexpr auto
 from_int_to(FROM val)
@@ -545,14 +545,14 @@ from_int_to(FROM val)
     using ultr = std::underlying_type_t<result_t>;
     if constexpr(std::is_unsigned_v<ultr>){
         ps_assert(  (val >= FROM{} && // in case FROM is signed
-                     static_cast<std::make_unsigned_t<FROM>>(val) <= std::numeric_limits<ultr>::max()), #__FUNCTION__ " integer value out of range") ;
+                     static_cast<std::make_unsigned_t<FROM>>(val) <= std::numeric_limits<ultr>::max()), "from_int_to: integer value out of range") ;
     } else {
         if constexpr (std::is_unsigned_v<FROM>){
-            ps_assert(  val <= static_cast<std::make_unsigned_t<ultr>>(std::numeric_limits<ultr>::max()), #__FUNCTION__ " integer value out of range");
+            ps_assert(  val <= static_cast<std::make_unsigned_t<ultr>>(std::numeric_limits<ultr>::max()), "from_int_to: integer value out of range");
 
         } else { // both are signed
             ps_assert(  (val <= std::numeric_limits<ultr>::max() &&
-                                val >= std::numeric_limits<ultr>::min()), #__FUNCTION__ " integer value out of range");
+                                val >= std::numeric_limits<ultr>::min()), "from_int_to: integer value out of range");
         }
     }
     return static_cast<result_t>(val); // cast is checked above
@@ -565,7 +565,7 @@ from_int_to(FROM val)
 
 
 // negation for signed types only, two's complement
-template<a_safeint E>
+template<an_overflowdetectingint E>
 constexpr E
 operator-(E l)
 requires std::numeric_limits<E>::is_signed
@@ -577,14 +577,14 @@ requires std::numeric_limits<E>::is_signed
 
 // increment/decrement
 
-template<a_safeint E>
+template<an_overflowdetectingint E>
 constexpr E&
 operator++(E& l)
 {
     return l = static_cast<E>(1) + l;
 }
 
-template<a_safeint E>
+template<an_overflowdetectingint E>
 constexpr E
 operator++(E& l, int)
 {
@@ -592,14 +592,14 @@ operator++(E& l, int)
     ++l;
     return result;
 }
-template<a_safeint E>
+template<an_overflowdetectingint E>
 constexpr E&
 operator--(E& l)
 {
     return l = l - static_cast<E>(1);
 }
 
-template<a_safeint E>
+template<an_overflowdetectingint E>
 constexpr E
 operator--(E& l, int)
 {
@@ -613,7 +613,7 @@ operator--(E& l, int)
 // arithmetic
 
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator+(LEFT l, RIGHT r)
 requires same_signedness<LEFT,RIGHT>
@@ -629,7 +629,7 @@ requires same_signedness<LEFT,RIGHT>
 }
 
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator+=(LEFT &l, RIGHT r)
 requires same_signedness<LEFT,RIGHT>
@@ -639,7 +639,7 @@ requires same_signedness<LEFT,RIGHT>
     return l;
 }
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator-(LEFT l, RIGHT r)
 requires same_signedness<LEFT,RIGHT>
@@ -653,7 +653,7 @@ requires same_signedness<LEFT,RIGHT>
     }
     return static_cast<result_t>(result);
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator-=(LEFT &l, RIGHT r)
 requires same_signedness<LEFT,RIGHT>
@@ -664,7 +664,7 @@ requires same_signedness<LEFT,RIGHT>
 }
 
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator*(LEFT l, RIGHT r)
 requires same_signedness<LEFT,RIGHT>
@@ -677,7 +677,7 @@ requires same_signedness<LEFT,RIGHT>
      }
     return static_cast<result_t>(result);
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator*=(LEFT &l, RIGHT r)
 requires same_signedness<LEFT,RIGHT>
@@ -686,7 +686,7 @@ requires same_signedness<LEFT,RIGHT>
     l = static_cast<LEFT>(l*r);
     return l;
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator/(LEFT const l, RIGHT const r)
 requires same_signedness<LEFT,RIGHT>
@@ -708,7 +708,7 @@ requires same_signedness<LEFT,RIGHT>
     );
 
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator/=(LEFT &l, RIGHT r)
 requires same_signedness<LEFT,RIGHT>
@@ -717,7 +717,7 @@ requires same_signedness<LEFT,RIGHT>
     l = static_cast<LEFT>(l/r);
     return l;
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator%(LEFT l, RIGHT r)
 requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
@@ -733,7 +733,7 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
             )
     );
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator%=(LEFT &l, RIGHT r) noexcept
 requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
@@ -745,7 +745,7 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
 
 // bitwise operators
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator&(LEFT l, RIGHT r) noexcept
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -753,7 +753,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)&promote_keep_signedness(r));
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator&=(LEFT &l, RIGHT r) noexcept
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -763,7 +763,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     return l;
 }
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator|(LEFT l, RIGHT r) noexcept
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -771,7 +771,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)|promote_keep_signedness(r));
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator|=(LEFT &l, RIGHT r) noexcept
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -781,7 +781,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     return l;
 }
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator^(LEFT l, RIGHT r) noexcept
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -789,7 +789,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)^promote_keep_signedness(r));
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator^=(LEFT &l, RIGHT r) noexcept
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -799,7 +799,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     return l;
 }
 
-template<a_safeint LEFT>
+template<an_overflowdetectingint LEFT>
 constexpr LEFT
 operator~(LEFT l) noexcept
 requires std::is_unsigned_v<ULT<LEFT>>
@@ -808,7 +808,7 @@ requires std::is_unsigned_v<ULT<LEFT>>
 }
 
 
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr LEFT
 operator<<(LEFT l, RIGHT r)
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -816,7 +816,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssodin: trying to left-shift by too many bits");
     return static_cast<LEFT>(promote_keep_signedness(l)<<promote_keep_signedness(r));
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator<<=(LEFT &l, RIGHT r)
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -824,7 +824,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     l = (l<<r);
     return l;
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr LEFT
 operator>>(LEFT l, RIGHT r)
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -832,7 +832,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssodin: trying to right-shift by too many bits");
     return static_cast<LEFT>(promote_keep_signedness(l)>>promote_keep_signedness(r));
 }
-template<a_safeint LEFT, a_safeint RIGHT>
+template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator>>=(LEFT &l, RIGHT r)
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
@@ -841,7 +841,7 @@ requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
     return l;
 }
 
-std::ostream& operator<<(std::ostream &out, a_safeint auto value){
+std::ostream& operator<<(std::ostream &out, an_overflowdetectingint auto value){
     out << promote_keep_signedness(value);
     return out;
 }
