@@ -570,7 +570,7 @@ constexpr E
 operator-(E l)
 requires std::numeric_limits<E>::is_signed
 {
-    ps_assert(  l != std::numeric_limits<E>::min() , "negating std::numeric_limits<E>::min()" );
+    ps_assert(  l != std::numeric_limits<E>::min() , "pssodin: negating std::numeric_limits<E>::min()" );
     return static_cast<E>(1u + ~promote_to_unsigned(l));
 }
 
