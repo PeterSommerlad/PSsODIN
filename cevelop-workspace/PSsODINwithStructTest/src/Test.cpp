@@ -8,18 +8,9 @@
 #include "NonBuiltInOverflowDetectionTests.h"
 #include "TestForThrowingAsserts.h"
 #include <type_traits>
-#include <cstddef>
-
-
 
 using namespace odins::literals;
-
-static_assert(0x8000_cui16 == 32768_cui16);
-
-
-
-
-
+using namespace odins;
 
 void si8preincrement(){
     auto one = 1_csi8;
@@ -168,7 +159,6 @@ void ui64postdecrement(){
     ASSERT_EQUAL(0_cui64,one);
 }
 void ui16intExists() {
-    using odins::cui16;
     auto large=0xff00_cui16;
     //0x10000_cui16; // compile error
     //ui16{0xfffff}; // narrowing detection
@@ -339,7 +329,7 @@ void ui32CanNotbeComparedwithlong(){
 
 //    ASSERTM("check comparison", l != s && s < l && l >= s && !(l < s) && ! (l <= s));
 
-    auto ss = odins::from_int(s);
+    auto ss = from_int(s);
     ASSERTM("check comparison", l != ss && ss < l && l >= ss && !(l < ss) && ! (l <= ss));
 
 }
@@ -350,14 +340,13 @@ void ui32CanNotbeComparedwithlong(){
 void si8canbeaddednormal(){
     ASSERT_EQUAL(42_csi8, 21_csi8 + 21_csi8);
 }
-using odins::detail_::promote_keep_signedness;
 
 void si8Negation(){
     ASSERT_EQUAL(-1,promote_keep_signedness(-1_csi8));
 }
 
 void si8negationminintthrows(){
-    ASSERT_THROWS(std::ignore = -(std::numeric_limits<odins::csi8>::min()), char const *);
+    ASSERT_THROWS(std::ignore = -(std::numeric_limits<csi8>::min()), char const *);
 }
 
 void si8overflowIsDetected(){
@@ -393,7 +382,6 @@ void ui8OutputAsInteger(){
 }
 
 void checkedFromInt(){
-    using namespace odins;
     ASSERT_THROWS(std::ignore = from_int_to<cui8>(2400u), char const *);
 
 }

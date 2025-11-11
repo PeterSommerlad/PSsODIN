@@ -3,7 +3,7 @@
 #include "cute.h"
 
 
-using namespace pssodin::non_builtin;
+using namespace pssodin::detail_::non_builtin;
 
 template<typename INT>
 struct testSignedAddOverflow{

@@ -8,7 +8,6 @@
 
 
 using namespace odins;
-using detail_::promote_keep_signedness;
 
 
 template<typename INT>
@@ -35,7 +34,7 @@ struct operations {
 };
 
 std::initializer_list<int8_t> i8_seed{1,1,2,3,5,8/*,13,21,34,55,89*/};
-std::initializer_list<odins::csi8> si8_seed{1_csi8,1_csi8,2_csi8,3_csi8,5_csi8,8_csi8/*,13_csi8,21_csi8,34_csi8,55_csi8,89_csi8*/};
+std::initializer_list<csi8> si8_seed{1_csi8,1_csi8,2_csi8,3_csi8,5_csi8,8_csi8/*,13_csi8,21_csi8,34_csi8,55_csi8,89_csi8*/};
 
 auto sum(operations<int8_t> const &ops){
     return ops.sum();
@@ -93,7 +92,7 @@ void codegenSubtractionTest(){
 
 namespace int16 {
 std::initializer_list<int16_t> i16_seed{1,1,2,3,5,8,13,21,34,55};
-std::initializer_list<odins::csi16> si16_seed{1_csi16,1_csi16,2_csi16,3_csi16,5_csi16,8_csi16,13_csi16,21_csi16,34_csi16,55_csi16};
+std::initializer_list<csi16> si16_seed{1_csi16,1_csi16,2_csi16,3_csi16,5_csi16,8_csi16,13_csi16,21_csi16,34_csi16,55_csi16};
 
 auto sum(operations<int16_t> const &ops){
     return ops.sum();
@@ -161,7 +160,7 @@ void codegenSubtractionTest(){
 }
 namespace int32 {
 std::initializer_list<int32_t> i32_seed{1,1,2,3,5,8,13,21,34,55,89};
-std::initializer_list<odins::csi32> si32_seed{1_csi32,1_csi32,2_csi32,3_csi32,5_csi32,8_csi32,13_csi32,21_csi32,34_csi32,55_csi32,89_csi32};
+std::initializer_list<csi32> si32_seed{1_csi32,1_csi32,2_csi32,3_csi32,5_csi32,8_csi32,13_csi32,21_csi32,34_csi32,55_csi32,89_csi32};
 
 auto sum(operations<int32_t> const &ops){
     return ops.sum();
@@ -219,7 +218,7 @@ void codegenSubtractionTest(){
 namespace int64 {
 constexpr std::initializer_list<int64_t> i64_seed{1,1,2,3,5,8,13,21,34,55,89,
                                         144,233,377,610};
-constexpr std::initializer_list<odins::csi64> si64_seed{1_csi64,1_csi64,2_csi64,3_csi64,5_csi64,8_csi64,13_csi64,21_csi64,34_csi64,55_csi64,89_csi64,
+constexpr std::initializer_list<csi64> si64_seed{1_csi64,1_csi64,2_csi64,3_csi64,5_csi64,8_csi64,13_csi64,21_csi64,34_csi64,55_csi64,89_csi64,
     144_csi64,233_csi64,377_csi64,610_csi64};
 
 auto sum(operations<int64_t> const &ops){
@@ -277,7 +276,7 @@ void codegenSubtractionTest(){
 }
 namespace uint32 {
 std::initializer_list<uint32_t> ui32_seed{1,1,2,3,5,8,13,21,34,55,89};
-std::initializer_list<odins::cui32> uui32_seed{1_cui32,1_cui32,2_cui32,3_cui32,5_cui32,8_cui32,13_cui32,21_cui32,34_cui32,55_cui32,89_cui32};
+std::initializer_list<cui32> uui32_seed{1_cui32,1_cui32,2_cui32,3_cui32,5_cui32,8_cui32,13_cui32,21_cui32,34_cui32,55_cui32,89_cui32};
 
 auto sum(operations<uint32_t> const &ops){
     return ops.sum();

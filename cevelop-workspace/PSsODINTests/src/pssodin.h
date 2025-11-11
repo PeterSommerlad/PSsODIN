@@ -324,6 +324,7 @@ promote_to_unsigned(E val) noexcept
 template<typename T>
 concept sized_integer = detail_::is_known_integer_v<T>;
 
+namespace detail_ {
 #ifdef __has_builtin
 #if __has_builtin(__builtin_add_overflow)
 # define HAVE_GCC_OVERFLOW_CHECKING
@@ -447,6 +448,7 @@ constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
     return true;
 }
 } // namespace non_builtin
+} // namespace detail_
 
 #ifdef HAVE_GCC_OVERFLOW_CHECKING
 template<sized_integer T>
@@ -570,7 +572,7 @@ constexpr E
 operator-(E l)
 requires std::numeric_limits<E>::is_signed
 {
-    ps_assert(  l != std::numeric_limits<E>::min() , "pssodin: negating std::numeric_limits<E>::min()" );
+    ps_assert(  l != std::numeric_limits<E>::min() , "pssodin: negating std::numeric_limits<>::min()" );
     return static_cast<E>(1u + ~promote_to_unsigned(l));
 }
 

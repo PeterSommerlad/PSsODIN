@@ -238,7 +238,7 @@ constexpr bool mul_overflow(T l, T r, T* result) noexcept {
 
 
 template<sized_integer INT>
-struct Odin;
+struct [[nodiscard]] Odin;
 
 namespace detail_{
 template<typename T>
@@ -259,7 +259,6 @@ concept an_overflowdetectingint = detail_::is_overflowdetectingint_v<E>;
 template<typename C>
 using ULT=detail_::ULT_impl<detail_::plain<C>>::type;
 
-namespace detail_ {
 
 template<typename E>
 using promoted_t = // will promote the underlying type keeping signedness
@@ -277,6 +276,7 @@ promote_keep_signedness(E value) noexcept
     return static_cast<promoted_t<E>>((value.value_which_should_not_be_referred_to_from_user_code));// promote with sign extension
 }
 
+namespace detail_ {
 
 template<an_overflowdetectingint E>
 [[nodiscard]]
@@ -296,6 +296,26 @@ promote_and_extend_to_unsigned(E value) noexcept
        using s_result_t = std::make_signed_t<u_result_t>;
        return static_cast<u_result_t>(static_cast<s_result_t>(promote_keep_signedness(value)));// promote with sign extension
 }
+template<sized_integer TO, sized_integer FROM>
+[[nodiscard]]
+constexpr auto
+from_int_to_impl(FROM val)
+{
+    if constexpr(std::is_unsigned_v<TO>){
+        ps_assert(  (val >= FROM{} && // in case FROM is signed
+                     static_cast<std::make_unsigned_t<FROM>>(val) <= std::numeric_limits<TO>::max()), "odins: integer value out of range") ;
+    } else {
+        if constexpr (std::is_unsigned_v<FROM>){
+            ps_assert(  val <= static_cast<std::make_unsigned_t<TO>>(std::numeric_limits<TO>::max()), "odins: integer value out of range");
+
+        } else { // both are signed
+            ps_assert(  (val <= std::numeric_limits<TO>::max() &&
+                                val >= std::numeric_limits<TO>::min()),  "odins:  integer value out of range");
+        }
+    }
+    return static_cast<TO>(val); // cast is checked above
+}
+
 
 
 } // NS detail_
@@ -307,34 +327,61 @@ same_signedness_v = std::numeric_limits<LEFT>::is_signed == std::numeric_limits<
 template<typename LEFT, typename RIGHT>
 concept same_signedness = same_signedness_v<LEFT,RIGHT>;
 
+using csi8  = Odin<std::int8_t >;
+using csi16 = Odin<std::int16_t>;
+using csi32 = Odin<std::int32_t>;
+using csi64 = Odin<std::int64_t>;
+using cui8  = Odin<std::uint8_t >;
+using cui16 = Odin<std::uint16_t>;
+using cui32 = Odin<std::uint32_t>;
+using cui64 = Odin<std::uint64_t>;
+
+// the following are not really needed for class types,
+// because of the availability of constructors, kept for symmetry
+
+template<sized_integer T>
+[[nodiscard]]
+constexpr auto
+from_int(T value) noexcept {
+    using detail_::is_compatible_integer_v;
+    using std::conditional_t;
+    struct cannot_convert_integer{};
+    using result_t =
+            conditional_t<is_compatible_integer_v<std::uint8_t,T>, cui8,
+             conditional_t<is_compatible_integer_v<std::uint16_t,T>, cui16,
+              conditional_t<is_compatible_integer_v<std::uint32_t,T>, cui32,
+               conditional_t<is_compatible_integer_v<std::uint64_t,T>, cui64,
+                conditional_t<is_compatible_integer_v<std::int8_t,T>, csi8,
+                 conditional_t<is_compatible_integer_v<std::int16_t,T>, csi16,
+                  conditional_t<is_compatible_integer_v<std::int32_t,T>, csi32,
+                   conditional_t<is_compatible_integer_v<std::int64_t,T>, csi64, cannot_convert_integer>>>>>>>>;
+    return static_cast<result_t>(static_cast<ULT<result_t>>(value)); // no need to check, result_t corresponds to input T's range
+}
+// path tests are compile-time checked:
+template<an_overflowdetectingint TO, sized_integer FROM>
+[[nodiscard]]
+constexpr auto
+from_int_to(FROM val)
+{
+    return static_cast<TO>(val); // work done by ctor
+}
 
 
 template<sized_integer INT>
-struct Odin{
+struct [[nodiscard]] Odin{
     constexpr Odin() noexcept:value_which_should_not_be_referred_to_from_user_code{}{}
-    explicit constexpr Odin(std::same_as<INT> auto v) noexcept:value_which_should_not_be_referred_to_from_user_code(v){
-    }
+    explicit constexpr Odin(std::same_as<INT> auto v) noexcept
+    :value_which_should_not_be_referred_to_from_user_code(v){}
     friend constexpr auto operator<=>(Odin, Odin) noexcept = default;
-    explicit constexpr operator INT() const noexcept { return value_which_should_not_be_referred_to_from_user_code;}
+    explicit constexpr operator INT() const noexcept {
+        return value_which_should_not_be_referred_to_from_user_code;
+    }
     template<std::integral FROM>
     explicit constexpr Odin(FROM v)
     requires (not std::same_as<INT,detail_::plain<FROM>>)
-    :value_which_should_not_be_referred_to_from_user_code(v){
-        if constexpr(std::is_unsigned_v<INT>){
-            ps_assert(  (v >= FROM{} && // in case FROM is signed
-                         static_cast<std::make_unsigned_t<FROM>>(v) <= std::numeric_limits<INT>::max()), "odins: integer value out of range") ;
-        } else {
-            if constexpr (std::is_unsigned_v<FROM>){
-                ps_assert(  v <= static_cast<std::make_unsigned_t<INT>>(std::numeric_limits<INT>::max()), "odins: integer value out of range");
+    :value_which_should_not_be_referred_to_from_user_code{
+        detail_::from_int_to_impl<INT>(v)}{}
 
-            } else { // both are signed
-                ps_assert(  (v <= std::numeric_limits<INT>::max() &&
-                                    v >= std::numeric_limits<INT>::min()), "odins: integer value out of range");
-            }
-        }
-    }
-
-    // member/friend operators
 
     // negation for signed types only, two's complement
     constexpr auto
@@ -509,8 +556,6 @@ struct Odin{
     operator&(Odin l, RIGHT r) noexcept
     requires std::is_unsigned_v<ULT<Odin>> && std::is_unsigned_v<ULT<RIGHT>>
     {
-        using detail_::promote_keep_signedness;
-
         using result_t=std::conditional_t<sizeof(Odin)>=sizeof(RIGHT),Odin,RIGHT>;
         return static_cast<result_t>(promote_keep_signedness(l)&promote_keep_signedness(r));
     }
@@ -529,7 +574,6 @@ struct Odin{
     operator|(Odin l, RIGHT r) noexcept
     requires std::is_unsigned_v<ULT<Odin>> && std::is_unsigned_v<ULT<RIGHT>>
     {
-        using detail_::promote_keep_signedness;
         using result_t=std::conditional_t<sizeof(Odin)>=sizeof(RIGHT),Odin,RIGHT>;
         return static_cast<result_t>(promote_keep_signedness(l)|promote_keep_signedness(r));
     }
@@ -548,8 +592,6 @@ struct Odin{
     operator^(Odin l, RIGHT r) noexcept
     requires std::is_unsigned_v<ULT<Odin>> && std::is_unsigned_v<ULT<RIGHT>>
     {
-        using detail_::promote_keep_signedness;
-
         using result_t=std::conditional_t<sizeof(Odin)>=sizeof(RIGHT),Odin,RIGHT>;
         return static_cast<result_t>(promote_keep_signedness(l)^promote_keep_signedness(r));
     }
@@ -568,7 +610,7 @@ struct Odin{
     operator~() noexcept
     requires std::is_unsigned_v<ULT<Odin>>
     {
-        return Odin(static_cast<INT>(~detail_::promote_keep_signedness(*this)));
+        return Odin(static_cast<INT>(~promote_keep_signedness(*this)));
     }
 
 
@@ -577,7 +619,6 @@ struct Odin{
     operator<<(Odin l, RIGHT r)
     requires std::is_unsigned_v<ULT<Odin>> && std::is_unsigned_v<ULT<RIGHT>>
     {
-        using detail_::promote_keep_signedness;
         ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(Odin)*CHAR_BIT , "odins: trying to left-shift by too many bits");
         return static_cast<Odin>(promote_keep_signedness(l)<<promote_keep_signedness(r));
     }
@@ -593,7 +634,7 @@ struct Odin{
     friend constexpr Odin
     operator>>(Odin l, RIGHT r)
     requires std::is_unsigned_v<ULT<Odin>> && std::is_unsigned_v<ULT<RIGHT>>
-    {   using detail_::promote_keep_signedness;
+    {
         ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(Odin)*CHAR_BIT , "odins: trying to right-shift by too many bits");
         return static_cast<Odin>(promote_keep_signedness(l)>>promote_keep_signedness(r));
     }
@@ -608,19 +649,22 @@ struct Odin{
 
 
     friend std::ostream& operator<<(std::ostream &out, Odin value){
-        out << detail_::promote_keep_signedness(value);
+        out << promote_keep_signedness(value); // ensures char types are printed as numbers
         return out;
     }
     // no need for private, makes compilability checks possible
     // all possible values of INT are valid
     INT value_which_should_not_be_referred_to_from_user_code;
 };
-// unsigned
 
-using cui8  = Odin<std::uint8_t >;
-using cui16 = Odin<std::uint16_t>;
-using cui32 = Odin<std::uint32_t>;
-using cui64 = Odin<std::uint64_t>;
+template<an_overflowdetectingint E>
+[[nodiscard]]
+constexpr auto
+to_underlying(E val) noexcept
+{ // plain value with all bad properties
+    return static_cast<ULT<E>>(val);
+}
+
 
 inline namespace literals {
 consteval
@@ -663,16 +707,8 @@ cui64 operator""_cui64(unsigned long long value_which_should_not_be_referred_to_
     return cui64(static_cast<std::uint64_t>(value_which_should_not_be_referred_to_from_user_code));
 }
 
-}
-
 // signed
-using csi8  = Odin<std::int8_t >;
-using csi16 = Odin<std::int16_t>;
-using csi32 = Odin<std::int32_t>;
-using csi64 = Odin<std::int64_t>;
 
-
-inline namespace literals {
 consteval
 csi8 operator""_csi8(unsigned long long value_which_should_not_be_referred_to_from_user_code) {
     if (value_which_should_not_be_referred_to_from_user_code <= std::numeric_limits<std::int8_t>::max()) {
@@ -713,49 +749,7 @@ csi64 operator""_csi64(unsigned long long value_which_should_not_be_referred_to_
 }
 } // NS literals
 
-// the following are not really needed for class types,
-// because of the availability of constructors, kept for symmetry
 
-template<sized_integer T>
-[[nodiscard]]
-constexpr auto
-from_int(T value_which_should_not_be_referred_to_from_user_code) noexcept {
-    using detail_::is_compatible_integer_v;
-    using std::conditional_t;
-    struct cannot_convert_integer{};
-    using result_t =
-            conditional_t<is_compatible_integer_v<std::uint8_t,T>, cui8,
-             conditional_t<is_compatible_integer_v<std::uint16_t,T>, cui16,
-              conditional_t<is_compatible_integer_v<std::uint32_t,T>, cui32,
-               conditional_t<is_compatible_integer_v<std::uint64_t,T>, cui64,
-                conditional_t<is_compatible_integer_v<std::int8_t,T>, csi8,
-                 conditional_t<is_compatible_integer_v<std::int16_t,T>, csi16,
-                  conditional_t<is_compatible_integer_v<std::int32_t,T>, csi32,
-                   conditional_t<is_compatible_integer_v<std::int64_t,T>, csi64, cannot_convert_integer>>>>>>>>;
-    return static_cast<result_t>(value_which_should_not_be_referred_to_from_user_code); // no need to check, result_t corresponds to input T's range
-}
-// path tests are compile-time checked:
-template<an_overflowdetectingint TO, sized_integer FROM>
-[[nodiscard]]
-constexpr auto
-from_int_to(FROM val)
-{
-    using result_t = TO;
-    using ultr = ULT<result_t>;
-    if constexpr(std::is_unsigned_v<ultr>){
-        ps_assert(  (val >= FROM{} && // in case FROM is signed
-                     static_cast<std::make_unsigned_t<FROM>>(val) <= std::numeric_limits<ultr>::max()), "from_int_to: integer value out of range") ;
-    } else {
-        if constexpr (std::is_unsigned_v<FROM>){
-            ps_assert(  val <= static_cast<std::make_unsigned_t<ultr>>(std::numeric_limits<ultr>::max()), "from_int_to: integer value out of range");
-
-        } else { // both are signed
-            ps_assert(  (val <= std::numeric_limits<ultr>::max() &&
-                                val >= std::numeric_limits<ultr>::min()),  "from_int_to:  integer value out of range");
-        }
-    }
-    return static_cast<result_t>(val); // cast is checked above
-}
 
 } // NS odins
 

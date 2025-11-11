@@ -12,9 +12,9 @@ void si16minnegateOverflows() {
     const auto minimum { std::numeric_limits<csi16>::min() };
     try {
         std::ignore = -minimum;
-    } catch (char const * const exc){
+    } catch (char const * const &exc){
         std::string const msg{exc};
-        std::string const expectedend{"negating std::numeric_limits<E>::min()"};
+        std::string const expectedend{"negating std::numeric_limits<>::min()"};
         ASSERT_EQUALM(msg,expectedend, msg.substr(msg.size()-expectedend.size()));
     }
 }
@@ -25,7 +25,7 @@ void si16mindividedbyminus1Overflows(){
         std::ignore = minimum / -1_csi16;
     } catch (exception_t const exc) {
         std::string const msg{exc};
-        std::string const expectedend{"pssodin: signed division overflow"};
+        std::string const expectedend{"signed division overflow"};
         ASSERT_EQUALM(msg,expectedend, msg.substr(msg.size()-expectedend.size()));
     }
 }

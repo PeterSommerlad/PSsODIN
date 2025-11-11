@@ -12,12 +12,6 @@
 using namespace pssodin::literals;
 using namespace pssodin;
 
-void signedIntegerBoundaryTestResultRecovery(){
-    // temporary testcase for getting static_asserts above right
-    ASSERT_EQUAL(0x8000'0000_csi64, std::numeric_limits<csi32>::max() + 1_csi64  );
-}
-
-
 void si8preincrement(){
     auto one = 1_csi8;
     ASSERT_EQUAL(2_csi8,++one);
@@ -165,7 +159,6 @@ void ui64postdecrement(){
     ASSERT_EQUAL(0_cui64,one);
 }
 void ui16intExists() {
-    using pssodin::cui16;
     auto large=0xff00_cui16;
     //0x10000_cui16; // compile error
     //ui16{0xfffff}; // narrowing detection
@@ -336,7 +329,7 @@ void ui32CanNotbeComparedwithlong(){
 
 //    ASSERTM("check comparison", l != s && s < l && l >= s && !(l < s) && ! (l <= s));
 
-    auto ss = pssodin::from_int(s);
+    auto ss = from_int(s);
     ASSERTM("check comparison", l != ss && ss < l && l >= ss && !(l < ss) && ! (l <= ss));
 
 }
@@ -353,7 +346,7 @@ void si8Negation(){
 }
 
 void si8negationminintthrows(){
-    ASSERT_THROWS(std::ignore = -(std::numeric_limits<pssodin::csi8>::min()), char const *);
+    ASSERT_THROWS(std::ignore = -(std::numeric_limits<csi8>::min()), char const *);
 }
 
 void si8overflowIsDetected(){
@@ -389,7 +382,6 @@ void ui8OutputAsInteger(){
 }
 
 void checkedFromInt(){
-    using namespace pssodin;
     ASSERT_THROWS(std::ignore = from_int_to<cui8>(2400u), char const *);
 
 }
@@ -478,7 +470,6 @@ bool runAllTests(int argc, char const *argv[]) {
 	s.push_back(CUTE(ui16canbecompared));
 	s.push_back(CUTE(ui16canNotbecomparedwithui8));
 	s.push_back(CUTE(ui32CanNotbeComparedwithlong));
-	s.push_back(CUTE(signedIntegerBoundaryTestResultRecovery));
     s.push_back(CUTE(si8preincrement));
     s.push_back(CUTE(si8postincrement));
     s.push_back(CUTE(si8predecrement));
@@ -516,9 +507,9 @@ bool runAllTests(int argc, char const *argv[]) {
     auto runner = cute::makeRunner(lis, argc, argv);
     bool success = runner(s, "AllTests");
     success = runner(make_suite_CodeGenBenchmark(),"CodeGenBenchmark") && success;
-    success &= runner(TestForThrowingAsserts, "TestForThrowingAsserts");
+    success = runner(TestForThrowingAsserts, "TestForThrowingAsserts") && success;
     cute::suite OverflowCheckedTests = make_suite_OverflowCheckedTests();
-    success &= runner(OverflowCheckedTests, "OverflowCheckedTests");
+    success = runner(OverflowCheckedTests, "OverflowCheckedTests") && success;
     return success;
 }
 

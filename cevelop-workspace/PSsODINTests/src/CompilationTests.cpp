@@ -1,9 +1,8 @@
 #include "pssodin.h"
 #include <cstddef>
-
-
-
+using namespace pssodin;
 using namespace pssodin::literals;
+namespace to_check = pssodin;
 
 static_assert(0x8000_cui16 == 32768_cui16);
 
@@ -16,7 +15,7 @@ from_int_compiles=false;
 
 template<typename FROM>
 constexpr bool
-from_int_compiles<FROM,std::void_t<decltype(pssodin::from_int(FROM{}))>> = true;
+from_int_compiles<FROM,std::void_t<decltype(from_int(FROM{}))>> = true;
 
 static_assert(from_int_compiles<unsigned char>);
 static_assert(from_int_compiles<signed char>);
@@ -47,7 +46,6 @@ static_assert(! from_int_compiles<wchar_t>);
 static_assert(! from_int_compiles<char16_t>);
 static_assert(! from_int_compiles<char32_t>);
 
-using namespace pssodin;
 
 static_assert(sizeof(long) == sizeof(long long)); // on my mac...
 static_assert(42_csi64 == from_int(42L));
@@ -75,8 +73,8 @@ static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(1_cui8)+1
 static_assert(std::is_same_v<unsigned,decltype(promote_keep_signedness(2_cui16)+1)>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(1_csi8))>);
 static_assert(std::is_same_v<int,decltype(promote_keep_signedness(2_csi16))>);
-static_assert(std::is_same_v<uint8_t,std::underlying_type_t<cui8>>);
-static_assert(std::is_same_v<uint16_t,std::underlying_type_t<cui16>>);
+static_assert(std::is_same_v<uint8_t,ULT<cui8>>);
+static_assert(std::is_same_v<uint16_t,ULT<cui16>>);
 
 
 //static_assert(promote_keep_signedness(0xffff_cui16 * 0xffff_cui16) == 0x1u); // wraps
@@ -502,11 +500,9 @@ static_assert(100_csi32 / -9_csi64 == -11_csi64);
 
 
 namespace compile_checks {
-using namespace pssodin;
+using namespace to_check;
 template<auto ...value>
 using consume_value = void;
-
-
 
 #define concat_line_impl(A, B) A##_##B
 #define concat_line(A, B) concat_line_impl(A,B)
@@ -533,6 +529,7 @@ check_does_compile(   ,  cui8 , + (1_cui8 << 7_cui8) + ) // not too wide shift
 check_does_compile(not,  cui8 , + (0x80_cui8 >> 010_cui8) + ) // too wide shift
 check_does_compile(   ,  cui8 , + (0x80_cui8 >> 7_cui8) + ) // not too wide shift
 check_does_compile(not,  cui8 ,  % ) // modulo 0
+check_does_compile(   ,  cui8 , + (5_cui8  % 2_cui8) + ) // modulo
 check_does_compile(not,  csi8 ,  / ) // div 0
 check_does_compile(not,  csi8 ,  % ) // modulo not working
 check_does_compile(not,  cui8 ,  / ) // div 0
@@ -612,8 +609,8 @@ static_assert(min_32 / vminus1_64 == 0x8000'0000_csi64 );
 check_does_compile(not,  csi32 , + min_32 / vminus1_32 +) // overflow detect
 check_does_compile(not,  csi32 , + min_32 / vminus1_16 +) // overflow detect
 check_does_compile(not,  csi32 , + min_32 / vminus1_8 +) // overflow detect
-static_assert(min_16 / vminus1_64 == -static_cast<csi64>(min_16)  );
 static_assert(min_16 / vminus1_32 == 0x8000_csi32 );
+static_assert(min_16 / vminus1_64 == -static_cast<csi64>(to_underlying(min_16))  );
 check_does_compile(not,  csi16 , + min_16 / vminus1_16 +) // overflow detect
 check_does_compile(not,  csi16 , + min_16 / vminus1_8 +) // overflow detect
 static_assert(min_8  / vminus1_64 == 128_csi64 );
@@ -621,7 +618,7 @@ static_assert(min_8  / vminus1_32 == 128_csi32 );
 static_assert(min_8  / vminus1_16 == 128_csi16 );
 check_does_compile(not,  csi8 , + min_8 / vminus1_8 +) // overflow detect
 
-// demonstrate modulo overflow detection:%
+// demonstrate overflow detection:%
 // not needed, only supported for unsigned operands
 
 
@@ -684,11 +681,11 @@ static_assert(0_cui8  == (v1u_8  >> v1u_8));
 static_assert(0_cui16 == (v1u_16 >> v1u_8));
 static_assert(0_cui32 == (v1u_32 >> v1u_8));
 static_assert(0_cui64 == (v1u_64 >> v1u_8));
-check_does_compile(not,  cui8 , + maxu_8 >> 8_cui8 +) // overflow detect
-check_does_compile(not,  cui16 , + maxu_16 >> 16_cui8 +) // overflow detect
-check_does_compile(not,  cui32 , + maxu_32 >> 32_cui8 +) // overflow detect
-check_does_compile(not,  cui64 , + maxu_64 >> 64_cui8 +) // overflow detect
-check_does_compile(not,  cui64 , + maxu_64 >> maxu_64 +) // overflow detect
+check_does_compile(not,  cui8 , + (maxu_8 >> 8_cui8) +) // overflow detect
+check_does_compile(not,  cui16 , + (maxu_16 >> 16_cui8) +) // overflow detect
+check_does_compile(not,  cui32 , + (maxu_32 >> 32_cui8) +) // overflow detect
+check_does_compile(not,  cui64 , + (maxu_64 >> 64_cui8) +) // overflow detect
+check_does_compile(not,  cui64 , + (maxu_64 >> maxu_64) +) // overflow detect
 
 // the following does not compile due to signed integer overflow on 32bit int
 //static_assert(static_cast<uint16_t>(0xffffu)* static_cast<uint16_t>(0xffffu));
@@ -777,6 +774,7 @@ check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_
 check_does_compile(    ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::min()-1u)  +) // ok from unsigned too large
 check_does_compile(    ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::max()+0u)  +) // ok conversion
 check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::max()+1u)  +) // overflow from unsigned conversion
+check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<int32_t>::max()+1LL)  +) // overflow from unsigned conversion
 check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<uint32_t>::max())  +) // too big
 check_does_compile(not ,  csi32, + from_int_to<csi32>(std::numeric_limits<uint32_t>::min()-1)  +) // unsigned overflow leads to too big value
 check_does_compile(    ,  csi32, + from_int_to<csi32>(std::numeric_limits<uint32_t>::max()-std::numeric_limits<int32_t>::min())  +) // OK
@@ -811,8 +809,8 @@ check_does_compile(not ,  cui32, + from_int_to<cui32>(-1)  +) // not ok conversi
 check_does_compile(    ,  cui32, + from_int_to<cui32>(42)  +) // ok conversion
 check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::min()+0)  +) // ok conversion
 check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max()+0)  +) // ok conversion
-check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::min()-1)  +) // expression wraps, OK conversion
-check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max()+1)  +) // expression wraps, OK conversion
+check_does_compile(    ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max()-1ULL)  +) // OK conversion
+check_does_compile(not ,  cui32, + from_int_to<cui32>(std::numeric_limits<uint32_t>::max()+1ULL)  +) // not ok conversion
 
 check_does_compile(not ,  cui64, + from_int_to<cui64>(-1)  +) // not ok conversion
 check_does_compile(    ,  cui64, + from_int_to<cui64>(42)  +) // ok conversion
@@ -966,8 +964,8 @@ template<typename T>
 constexpr bool
 is_integer = is_unsigned<T>||is_signed<T>;
 
-static_assert(is_integer<std::underlying_type_t<cui16>>);
+static_assert(is_integer<ULT<cui16>>);
 static_assert(!is_integer<cui16>);
-static_assert(is_integer<std::underlying_type_t<csi16>>);
+static_assert(is_integer<ULT<csi16>>);
 static_assert(!is_integer<csi16>);
 }

@@ -9,7 +9,7 @@ void DivisionByZeroThrows() {
     auto divident = 1_csi8;
 
     ASSERT_THROWS((void)(divident/divisor), char const *);
-    //constexpr auto should_not_compile = 1_csi8 / divisor; in Test.cpp
+    //constexpr auto should_not_compile = 1_csi8 / divisor; in CompilationTests.cpp
 }
 
 void ModuloByZeroThrows() {
@@ -18,7 +18,7 @@ void ModuloByZeroThrows() {
 
     ASSERT_THROWS((void)(divident % divisor), char const *);
 
-    //constexpr auto should_not_compile = 1_cui8 % divisor; in Test.cpp
+    //constexpr auto should_not_compile = 1_cui8 % divisor; in CompilationTests.cpp
 }
 
 void ShiftLeftByTooManyBitsThrows() {
@@ -26,14 +26,14 @@ void ShiftLeftByTooManyBitsThrows() {
     auto toshift = 0xff_cui8;
 
     ASSERT_THROWS((void)(toshift << shiftby), char const *);
-     //constexpr auto should_not_compile = 1_cui8 << shiftby; in Test.cpp
+     //constexpr auto should_not_compile = 1_cui8 << shiftby; in CompilationTests.cpp
 }
 void ShiftRightByTooManyBitsThrows() {
     constexpr auto shiftby = 8_cui8;
     auto toshift = 0xff_cui8;
 
     ASSERT_THROWS((void)(toshift >> shiftby), char const *);
-     //constexpr auto should_not_compile = 1_cui8 >> shiftby; in Test.cpp
+     //constexpr auto should_not_compile = 1_cui8 >> shiftby; in CompilationTests.cpp
 }
 
 
