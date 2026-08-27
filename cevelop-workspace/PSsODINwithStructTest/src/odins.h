@@ -490,6 +490,19 @@ struct [[nodiscard]] Odin{
         }
         return static_cast<result_t>(result);
     }
+    template<std::integral RIGHT>
+    friend constexpr auto
+    operator*(Odin l, RIGHT r)
+    {
+        return l * from_int_to<Odin>(r);
+    }
+    template<std::integral LEFT>
+    friend constexpr auto
+    operator*(LEFT l, Odin r)
+    {
+        return from_int_to<Odin>(l) * r;
+    }
+
     template<an_overflowdetectingint RIGHT>
     constexpr auto&
     operator*=(RIGHT r) &
@@ -499,6 +512,13 @@ struct [[nodiscard]] Odin{
         *this = static_cast<Odin>(*this*r);
         return *this;
     }
+    template<std::integral RIGHT>
+    constexpr auto&
+    operator*=(RIGHT r) &
+    {
+        return *this *= from_int_to<Odin>(r);
+    }
+
     template<an_overflowdetectingint RIGHT>
     friend constexpr auto
     operator/(Odin const l, RIGHT const r)
@@ -515,6 +535,13 @@ struct [[nodiscard]] Odin{
         }
         return static_cast<result_t>(numerator/denominator);
     }
+    template<std::integral RIGHT>
+    friend constexpr auto
+    operator/(Odin const l, RIGHT const r)
+    {
+        return l / from_int_to<Odin>(r);
+    }
+
     template<an_overflowdetectingint RIGHT>
     constexpr auto&
     operator/=(RIGHT r) &
@@ -524,6 +551,13 @@ struct [[nodiscard]] Odin{
         *this = static_cast<Odin>(*this/r);
         return *this;
     }
+    template<std::integral RIGHT>
+    constexpr auto&
+    operator/=(RIGHT r) &
+    {
+        return *this /= from_int_to<Odin>(r);
+    }
+
     template<an_overflowdetectingint RIGHT>
     friend constexpr auto
     operator%(Odin l, RIGHT r)

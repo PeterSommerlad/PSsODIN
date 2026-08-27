@@ -11,6 +11,51 @@
 
 using namespace odins::literals;
 using namespace odins;
+void skalarmultbyUnsignedTest(){
+    auto val = 10_cui16;
+    val *= 10u;
+    ASSERT_EQUAL(100_cui16, val);
+}
+
+void skalarmultUnsignedTest(){
+    auto val = 10_cui16;
+    ASSERT_EQUAL(100_cui16, val * 10);
+    ASSERT_EQUAL(100_cui16, 10 * val);
+}
+void skalardivbyUnsignedTest(){
+    auto val = 100_cui16;
+    val /= 10u;
+    ASSERT_EQUAL(10_cui16, val);
+}
+
+void skalardivUnsignedTest(){
+    auto val = 100_cui16;
+    ASSERT_EQUAL(10_cui16, val / 10);
+}
+
+
+void skalarmultbySignedTest(){
+    auto val = 10_csi16;
+    val *= 10u;
+    ASSERT_EQUAL(100_csi16, val);
+}
+
+void skalarmultSignedTest(){
+    auto val = 10_csi16;
+    ASSERT_EQUAL(100_csi16, val * 10);
+    ASSERT_EQUAL(100_csi16,  10 * val);
+}
+
+void skalardivbySignedTest(){
+    auto val = 100_csi16;
+    val /= 10;
+    ASSERT_EQUAL(10_csi16, val);
+}
+
+void skalardivSignedTest(){
+    auto val = 100_csi16;
+    ASSERT_EQUAL(10_csi16, val / 10);
+}
 
 void si8preincrement(){
     auto one = 1_csi8;
@@ -502,6 +547,14 @@ bool runAllTests(int argc, char const *argv[]) {
     s.push_back(CUTE(ui64postincrement));
     s.push_back(CUTE(ui64predecrement));
     s.push_back(CUTE(ui64postdecrement));
+    s.push_back(CUTE(skalarmultbyUnsignedTest));
+    s.push_back(CUTE(skalarmultUnsignedTest));
+    s.push_back(CUTE(skalarmultbySignedTest));
+    s.push_back(CUTE(skalarmultSignedTest));
+    s.push_back(CUTE(skalardivbyUnsignedTest));
+    s.push_back(CUTE(skalardivUnsignedTest));
+    s.push_back(CUTE(skalardivbySignedTest));
+    s.push_back(CUTE(skalardivSignedTest));
 	cute::xml_file_opener xmlfile(argc, argv);
     cute::xml_listener<cute::ide_listener<>> lis(xmlfile.out);
     auto runner = cute::makeRunner(lis, argc, argv);

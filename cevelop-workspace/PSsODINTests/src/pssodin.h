@@ -6,6 +6,7 @@
 #include <iosfwd>
 #include <limits>
 #include <climits>
+#include <concepts>
 // define to non-zero for self-kill with core dump, testing requires 0 for throw
 #ifndef PSSODIN_SHOULD_RAISE
 #define PSSODIN_SHOULD_RAISE 0
@@ -601,6 +602,19 @@ requires same_signedness<LEFT,RIGHT>
      }
     return static_cast<result_t>(result);
 }
+template<an_overflowdetectingint LEFT, std::integral RIGHT>
+constexpr auto
+operator*(LEFT l, RIGHT r)
+{
+    return l * from_int_to<LEFT>(r);
+}
+template<std::integral LEFT, an_overflowdetectingint RIGHT>
+constexpr auto
+operator*(LEFT l, RIGHT r)
+{
+    return from_int_to<RIGHT>(l) * r;
+}
+
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator*=(LEFT &l, RIGHT r)
@@ -609,6 +623,12 @@ requires same_signedness<LEFT,RIGHT>
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"multiplying too large integer type");
     l = static_cast<LEFT>(l*r);
     return l;
+}
+template<an_overflowdetectingint LEFT, std::integral RIGHT>
+constexpr auto&
+operator*=(LEFT &l, RIGHT r)
+{
+    return l *= from_int_to<LEFT>(r);
 }
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
@@ -632,6 +652,13 @@ requires same_signedness<LEFT,RIGHT>
     );
 
 }
+template<an_overflowdetectingint LEFT, std::integral RIGHT>
+constexpr auto
+operator/(LEFT const l, RIGHT const r)
+{
+    return l / from_int_to<LEFT>(r);
+}
+
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto&
 operator/=(LEFT &l, RIGHT r)
@@ -641,6 +668,13 @@ requires same_signedness<LEFT,RIGHT>
     l = static_cast<LEFT>(l/r);
     return l;
 }
+template<an_overflowdetectingint LEFT, std::integral RIGHT>
+constexpr auto&
+operator/=(LEFT &l, RIGHT r)
+{
+    return l /= from_int_to<LEFT>(r);
+}
+
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator%(LEFT l, RIGHT r)
