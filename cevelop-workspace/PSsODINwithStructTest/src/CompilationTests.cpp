@@ -123,6 +123,8 @@ constexpr auto min_64 { std::numeric_limits<csi64>::min() };
 constexpr auto max_8  { std::numeric_limits<csi8 >::max() };
 constexpr auto max_16 { std::numeric_limits<csi16>::max() };
 constexpr auto max_32 { std::numeric_limits<csi32>::max() };
+#if __cplusplus >= 202002L
+// used for compilation tests:
 constexpr auto max_64 { std::numeric_limits<csi64>::max() };
 
 
@@ -138,7 +140,7 @@ constexpr auto v2u_64 {  2_cui64 };
 constexpr auto v2u_32 {  2_cui32 };
 constexpr auto v2u_16 {  2_cui16 };
 constexpr auto v2u_8  {  2_cui8 };
-
+#endif
 }
 
 static_assert(v1_64 + vminus1_64 == 0_csi64 );
@@ -498,7 +500,7 @@ static_assert(100_csi32 / -9_csi64 == -11_csi64);
 //static_assert(std::numeric_limits<si32>::min() / 1_csi32 == std::numeric_limits<si32>::min()); // wraps
 //static_assert(std::numeric_limits<si32>::min() / -1_csi32 == std::numeric_limits<si32>::min()); // wraps
 
-
+#if __cplusplus >= 202002L
 namespace compile_checks {
 using namespace to_check;
 template<auto ...value>
@@ -937,10 +939,11 @@ check_does_compile(    ,  cui64, +  1_cui64 - 1_cui8  +) // same signedness
 #undef concat_line_impl
 #undef concat_line
 
+#endif // compilation tests with structs require C++20
 
 template<typename T, typename WHAT>
 constexpr bool
-isa = std::is_same_v<std::remove_cvref_t<T>,WHAT>;
+isa = std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>,WHAT>;
 
 
 template<typename T>

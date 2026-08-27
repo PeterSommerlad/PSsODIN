@@ -6,7 +6,9 @@
 #include <iosfwd>
 #include <limits>
 #include <climits>
+#ifdef __cpp_concepts
 #include <concepts>
+#endif
 // define to non-zero for self-kill with core dump, testing requires 0 for throw
 #ifndef PSSODIN_SHOULD_RAISE
 #define PSSODIN_SHOULD_RAISE 0
@@ -25,6 +27,15 @@
 
 // no NDEBUG-like support, because we want safety!
 
+#if __cplusplus == 201703L
+#define CONSTEVAL constexpr
+#elif __cplusplus >= 202002L
+#define CONSTEVAL consteval
+#else
+#error "requires at least C++17, best C++20"
+#endif
+
+
 namespace pssodin { // Peter Sommerlad's simple Overflow Detecting Integral Numbers PSsODIN
 
 
@@ -35,7 +46,7 @@ enum class [[nodiscard]]cui32: std::uint32_t{ pssodin_tag_to_prevent_mixing_othe
 enum class [[nodiscard]]cui64: std::uint64_t{ pssodin_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
-consteval
+CONSTEVAL
 cui8 operator""_cui8(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<cui8>>::max()) {
         return cui8(val);
@@ -45,7 +56,7 @@ cui8 operator""_cui8(unsigned long long val) {
 }
 
 
-consteval
+CONSTEVAL
 cui16 operator""_cui16(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<cui16>>::max()) {
         return cui16(val);
@@ -55,7 +66,7 @@ cui16 operator""_cui16(unsigned long long val) {
 }
 
 
-consteval
+CONSTEVAL
 cui32 operator""_cui32(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<cui32>>::max()) {
         return cui32(val);
@@ -65,7 +76,7 @@ cui32 operator""_cui32(unsigned long long val) {
 }
 
 
-consteval
+CONSTEVAL
 cui64 operator""_cui64(unsigned long long val) {
     if constexpr (sizeof(cui64) < sizeof(val)){
         if (val > 0xffff'ffff'fffffffful) {
@@ -83,7 +94,7 @@ enum class [[nodiscard]]csi32: std::int32_t{ pssodin_tag_to_prevent_mixing_other
 enum class [[nodiscard]]csi64: std::int64_t{ pssodin_tag_to_prevent_mixing_other_enums };
 
 inline namespace literals {
-consteval
+CONSTEVAL
 csi8 operator""_csi8(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<csi8>>::max()) {
         return csi8(val);
@@ -93,7 +104,7 @@ csi8 operator""_csi8(unsigned long long val) {
 }
 
 
-consteval
+CONSTEVAL
 csi16 operator""_csi16(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<csi16>>::max()) {
         return csi16(val);
@@ -103,7 +114,7 @@ csi16 operator""_csi16(unsigned long long val) {
 }
 
 
-consteval
+CONSTEVAL
 csi32 operator""_csi32(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<csi32>>::max()) {
         return csi32(val);
@@ -113,7 +124,7 @@ csi32 operator""_csi32(unsigned long long val) {
 }
 
 
-consteval
+CONSTEVAL
 csi64 operator""_csi64(unsigned long long val) {
     if (val <= std::numeric_limits<std::underlying_type_t<csi64>>::max()) {
         return csi64(val);
@@ -123,17 +134,16 @@ csi64 operator""_csi64(unsigned long long val) {
 }
 }
 
+#undef CONSTEVAL
 
 
-
+namespace detail_ {
+#if __cplusplus >= 202002L
 template<typename T>
 using plain = std::remove_cvref_t<T>;
 
 template<typename T>
 concept an_enum = std::is_enum_v<plain<T>>;
-
-
-namespace detail_ {
 // from C++23
 template<an_enum T>
 constexpr bool
@@ -142,8 +152,22 @@ is_scoped_enum_v = not std::is_convertible_v<T, std::underlying_type_t<T>>;
 template<typename T>
 concept a_scoped_enum = is_scoped_enum_v<T>;
 
+#else
+template<typename T>
+using plain = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template<typename T>
+constexpr bool an_enum = std::is_enum_v<plain<T>>;
+// from C++23
+template<typename T, typename = std::enable_if_t<an_enum<T>,void>>
+constexpr bool
+is_scoped_enum_v = !std::is_convertible_v<T, std::underlying_type_t<T>>;
+
+#endif
+
 
 // detection concept
+#if __cplusplus >= 202002L
 
 template<typename T>
 constexpr bool
@@ -152,15 +176,26 @@ is_overflowdetectingint_v = false;
 template<a_scoped_enum E>
 constexpr bool
 is_overflowdetectingint_v<E> = requires { E{} == E::pssodin_tag_to_prevent_mixing_other_enums; } ;
+#else
+template<typename T, typename=void>
+constexpr bool
+is_overflowdetectingint_v = false;
+template<typename E>
+constexpr bool
+is_overflowdetectingint_v<E,std::void_t<decltype( E{} == E::pssodin_tag_to_prevent_mixing_other_enums )>> = is_scoped_enum_v<E> ;
+
+#endif
 
 
 
 } // NS detail_
 
 template<typename E>
-using ULT=std::conditional_t<std::is_enum_v<plain<E>>,std::underlying_type_t<plain<E>>,plain<E>>;
+using ULT=std::conditional_t<std::is_enum_v<detail_::plain<E>>,std::underlying_type_t<detail_::plain<E>>,detail_::plain<E>>;
+#ifdef __cpp_concepts
 template<typename E>
 concept an_overflowdetectingint = detail_::is_overflowdetectingint_v<E>;
+#endif
 
 namespace detail_ {
 template<typename E>
@@ -174,10 +209,14 @@ using promoted_t = // will promote keeping signedness
 }
 
 namespace detail_{
-
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT,
+typename=std::enable_if_t<is_overflowdetectingint_v<LEFT> &&is_overflowdetectingint_v<RIGHT>>>
+#endif
 constexpr bool
-same_signedness_v = std::numeric_limits<LEFT>::is_signed == std::numeric_limits<RIGHT>::is_signed;
+same_signedness_v = is_overflowdetectingint_v<LEFT> && is_overflowdetectingint_v<RIGHT> && std::numeric_limits<LEFT>::is_signed == std::numeric_limits<RIGHT>::is_signed;
 
 template<typename CHAR>
 constexpr bool
@@ -190,7 +229,6 @@ is_chartype_v =    std::is_same_v<char,CHAR>
                 || std::is_same_v<char32_t,CHAR> ;
 
 
-
 template<typename INT, typename TESTED>
 constexpr bool
 is_compatible_integer_v = std::is_same_v<TESTED,INT> ||
@@ -200,10 +238,15 @@ is_compatible_integer_v = std::is_same_v<TESTED,INT> ||
    && (std::is_unsigned_v<INT> == std::is_unsigned_v<TESTED>)
    && std::numeric_limits<TESTED>::max() == std::numeric_limits<INT>::max() );
 
+template<typename TESTED,typename=void>
+constexpr bool
+is_known_integer_v=false;
 
+// only support the following sizes:
 template<typename TESTED>
 constexpr bool
-is_known_integer_v =    is_compatible_integer_v<std::uint8_t,  TESTED>
+is_known_integer_v<TESTED,std::enable_if_t<std::is_integral_v<TESTED>>> =
+                        is_compatible_integer_v<std::uint8_t,  TESTED>
                      || is_compatible_integer_v<std::uint16_t, TESTED>
                      || is_compatible_integer_v<std::uint32_t, TESTED>
                      || is_compatible_integer_v<std::uint64_t, TESTED>
@@ -214,10 +257,16 @@ is_known_integer_v =    is_compatible_integer_v<std::uint8_t,  TESTED>
 
 } // NS detail_
 
+#ifdef __cpp_concepts
 template<typename LEFT, typename RIGHT>
 concept same_signedness = detail_::same_signedness_v<LEFT,RIGHT>;
+#endif
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E, typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>>>
+#endif
 [[nodiscard]]
 constexpr auto
 promote_keep_signedness(E val) noexcept
@@ -226,7 +275,11 @@ promote_keep_signedness(E val) noexcept
 }
 
 // not used in framework:
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E, typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>>>
+#endif
 [[nodiscard]]
 constexpr auto
 to_underlying(E val) noexcept 
@@ -234,7 +287,11 @@ to_underlying(E val) noexcept
     return static_cast<std::underlying_type_t<E>>(val);
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E, typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>>>
+#endif
 [[nodiscard]]
 constexpr auto
 promote_to_unsigned(E val) noexcept
@@ -244,8 +301,10 @@ promote_to_unsigned(E val) noexcept
 }
 
 // deliberately not std::integral, because of bool and characters!
+#ifdef __cpp_concepts
 template<typename T>
 concept sized_integer = detail_::is_known_integer_v<T>;
+#endif
 
 namespace detail_ {
 #ifdef __has_builtin
@@ -259,7 +318,11 @@ namespace detail_ {
 
 namespace non_builtin {
 // like built-ins __builtin_add_overflow return true on overflow
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool non_builtin_add_overflow(T l, T r, T* result) noexcept {
     if constexpr (std::numeric_limits<T>::is_signed){
@@ -289,7 +352,11 @@ constexpr bool non_builtin_add_overflow(T l, T r, T* result) noexcept {
     }
     return true;
 }
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool non_builtin_sub_overflow(T l, T r, T* result) noexcept {
     if constexpr (std::numeric_limits<T>::is_signed){
@@ -319,7 +386,11 @@ constexpr bool non_builtin_sub_overflow(T l, T r, T* result) noexcept {
     }
     return true;
 }
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
     if constexpr (std::numeric_limits<T>::is_signed){
@@ -374,34 +445,58 @@ constexpr bool non_builtin_mul_overflow(T l, T r, T* result) noexcept {
 } // namespace detail_
 
 #ifdef HAVE_GCC_OVERFLOW_CHECKING
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool add_overflow(T l, T r, T* result) noexcept {
     return __builtin_add_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool sub_overflow(T l, T r, T* result) noexcept {
     return __builtin_sub_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool mul_overflow(T l, T r, T* result) noexcept {
     return __builtin_mul_overflow(l,r,result);
 }
 
 #else // DIY
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool add_overflow(T l, T r, T* result) noexcept {
     return non_builtin::non_builtin_add_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool sub_overflow(T l, T r, T* result) noexcept {
     return non_builtin::non_builtin_sub_overflow(l,r,result);
 }
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T>
+#endif
 [[nodiscard]]
 constexpr bool mul_overflow(T l, T r, T* result) noexcept {
     return non_builtin::non_builtin_mul_overflow(l,r,result);
@@ -410,8 +505,12 @@ constexpr bool mul_overflow(T l, T r, T* result) noexcept {
 #endif
 
 
-
+#ifdef __cpp_concepts
 template<sized_integer TARGET, an_overflowdetectingint E>
+#else
+template<typename TARGET, typename E,
+typename=std::enable_if_t<pssodin::detail_::is_known_integer_v<TARGET> && pssodin::detail_::is_overflowdetectingint_v<E>>>
+#endif
 [[nodiscard]]
 constexpr auto
 promote_and_extend_to_unsigned(E val) noexcept
@@ -421,11 +520,20 @@ promote_and_extend_to_unsigned(E val) noexcept
        using s_result_t = std::make_signed_t<u_result_t>;
        return static_cast<u_result_t>(static_cast<s_result_t>(promote_keep_signedness(val)));// promote with sign extension
 }
+#ifdef __cpp_concepts
 template<sized_integer TARGET, an_overflowdetectingint E>
+#else
+template<typename TARGET, typename E,
+std::enable_if_t<pssodin::detail_::is_known_integer_v<TARGET>
+              && std::numeric_limits<TARGET>::is_signed
+              && pssodin::detail_::is_overflowdetectingint_v<E>>>
+#endif
 [[nodiscard]]
 constexpr auto
 abs_promoted_and_extended_as_unsigned(E val) noexcept
+#ifdef __cpp_concepts
  requires (std::numeric_limits<TARGET>::is_signed)
+#endif
 { // promote to unsigned for wrap around arithmetic removing sign if negative
   // return just the bits for std::numeric_limits<TARGET>::min()
        using promoted_t = detail_::promoted_t<E>;
@@ -441,8 +549,11 @@ abs_promoted_and_extended_as_unsigned(E val) noexcept
        }
 }
 
-
+#ifdef __cpp_concepts
 template<sized_integer T>
+#else
+template<typename T, typename=std::enable_if_t<detail_::is_known_integer_v<T>>>
+#endif
 [[nodiscard]]
 constexpr auto
 from_int(T val) noexcept {
@@ -461,7 +572,12 @@ from_int(T val) noexcept {
     return static_cast<result_t>(val); // no need to check, result_t corresponds to input T's range
 }
 // path tests are compile-time checked:
+#ifdef __cpp_concepts
 template<an_overflowdetectingint TO, sized_integer FROM>
+#else
+template<typename TO, typename FROM,
+typename=std::enable_if_t<detail_::is_known_integer_v<FROM> && detail_::is_overflowdetectingint_v<TO>>>
+#endif
 [[nodiscard]]
 constexpr auto
 from_int_to(FROM val)
@@ -490,10 +606,17 @@ from_int_to(FROM val)
 
 
 // negation for signed types only, two's complement
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E,
+typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>&&std::numeric_limits<E>::is_signed>>
+#endif
 constexpr E
 operator-(E l)
+#ifdef __cpp_concepts
 requires std::numeric_limits<E>::is_signed
+#endif
 {
     ps_assert(  l != std::numeric_limits<E>::min() , "pssodin: negating std::numeric_limits<>::min()" );
     return static_cast<E>(1u + ~promote_to_unsigned(l));
@@ -502,14 +625,24 @@ requires std::numeric_limits<E>::is_signed
 
 // increment/decrement
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E,
+typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>>>
+#endif
 constexpr E&
 operator++(E& l)
 {
     return l = static_cast<E>(1) + l;
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E,
+typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>>>
+#endif
 constexpr E
 operator++(E& l, int)
 {
@@ -517,14 +650,24 @@ operator++(E& l, int)
     ++l;
     return result;
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E,
+typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>>>
+#endif
 constexpr E&
 operator--(E& l)
 {
     return l = l - static_cast<E>(1);
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint E>
+#else
+template<typename E,
+typename=std::enable_if_t<detail_::is_overflowdetectingint_v<E>>>
+#endif
 constexpr E
 operator--(E& l, int)
 {
@@ -537,11 +680,20 @@ operator--(E& l, int)
 
 // arithmetic
 
-
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto
 operator+(LEFT l, RIGHT r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     // need to handle sign extension
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
@@ -554,20 +706,40 @@ requires same_signedness<LEFT,RIGHT>
 }
 
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto&
 operator+=(LEFT &l, RIGHT r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"pssodin: adding too large integer type");
     l = static_cast<LEFT>(l+r);
     return l;
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto
 operator-(LEFT l, RIGHT r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = ULT<result_t>;
@@ -578,10 +750,20 @@ requires same_signedness<LEFT,RIGHT>
     }
     return static_cast<result_t>(result);
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto&
 operator-=(LEFT &l, RIGHT r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"subtracting too large integer type");
     l = static_cast<LEFT>(l-r);
@@ -589,10 +771,20 @@ requires same_signedness<LEFT,RIGHT>
 }
 
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto
 operator*(LEFT l, RIGHT r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = ULT<result_t>;
@@ -602,38 +794,80 @@ requires same_signedness<LEFT,RIGHT>
      }
     return static_cast<result_t>(result);
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+#ifdef __cpp_concepts
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
+#else
+template<typename LEFT, typename RIGHT>
+#endif
 constexpr auto
 operator*(LEFT l, RIGHT r)
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_overflowdetectingint_v<LEFT>&&detail_::is_known_integer_v<RIGHT>, LEFT>
+#endif
 {
     return l * from_int_to<LEFT>(r);
 }
-template<std::integral LEFT, an_overflowdetectingint RIGHT>
+#ifdef __cpp_concepts
+template<sized_integer LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT>
+#endif
 constexpr auto
 operator*(LEFT l, RIGHT r)
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_overflowdetectingint_v<RIGHT>&&detail_::is_known_integer_v<LEFT>, RIGHT>
+#endif
 {
     return from_int_to<RIGHT>(l) * r;
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto&
 operator*=(LEFT &l, RIGHT r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"multiplying too large integer type");
     l = static_cast<LEFT>(l*r);
     return l;
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+#ifdef __cpp_concepts
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
 constexpr auto&
+#else
+template<typename LEFT, typename RIGHT>
+constexpr auto
+#endif
 operator*=(LEFT &l, RIGHT r)
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_overflowdetectingint_v<LEFT> && detail_::is_known_integer_v<RIGHT>,LEFT&>
+#endif
 {
     return l *= from_int_to<LEFT>(r);
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto
 operator/(LEFT const l, RIGHT const r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = ULT<result_t>;
@@ -652,33 +886,69 @@ requires same_signedness<LEFT,RIGHT>
     );
 
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+#ifdef __cpp_concepts
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
+#else
+template<typename LEFT, typename RIGHT>
+#endif
 constexpr auto
 operator/(LEFT const l, RIGHT const r)
+#ifndef __cpp_concepts
+->std::enable_if_t<detail_::is_overflowdetectingint_v<LEFT> && detail_::is_known_integer_v<RIGHT>, LEFT>
+#endif
 {
     return l / from_int_to<LEFT>(r);
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT>
+>>
+#endif
 constexpr auto&
 operator/=(LEFT &l, RIGHT r)
+#ifdef __cpp_concepts
 requires same_signedness<LEFT,RIGHT>
+#endif
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"dividing by too large integer type");
     l = static_cast<LEFT>(l/r);
     return l;
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+#ifdef __cpp_concepts
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
 constexpr auto&
+#else
+template<typename LEFT, typename RIGHT>
+constexpr auto
+#endif
 operator/=(LEFT &l, RIGHT r)
+#ifndef __cpp_concepts
+-> std::enable_if_t<detail_::is_overflowdetectingint_v<LEFT> && detail_::is_known_integer_v<RIGHT>, LEFT&>
+#endif
 {
     return l /= from_int_to<LEFT>(r);
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto
 operator%(LEFT l, RIGHT r)
-requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
+#ifdef __cpp_concepts
+requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
+
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     using ult = ULT<result_t>;
@@ -691,10 +961,20 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
             )
     );
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto&
 operator%=(LEFT &l, RIGHT r) noexcept
-requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
+#ifdef __cpp_concepts
+requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     static_assert(sizeof(LEFT) >= sizeof(RIGHT),"dividing by too large integer type");
     l = static_cast<LEFT>(l%r);
@@ -703,107 +983,289 @@ requires same_signedness<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
 
 // bitwise operators
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
+>>
+#endif
 constexpr auto
 operator&(LEFT l, RIGHT r) noexcept
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)&promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+detail_::same_signedness_v<LEFT,RIGHT> && std::is_unsigned_v<ULT<LEFT>>
+>>
+#endif
 constexpr auto&
 operator&=(LEFT &l, RIGHT r) noexcept
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     static_assert(sizeof(LEFT) == sizeof(RIGHT),"bitand by different sized integer type");
     l = static_cast<LEFT>(l&r);
     return l;
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto
 operator|(LEFT l, RIGHT r) noexcept
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)|promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto&
 operator|=(LEFT &l, RIGHT r) noexcept
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     static_assert(sizeof(LEFT) == sizeof(RIGHT),"bitor by different sized integer type");
     l = static_cast<LEFT>(l|r);
     return l;
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto
 operator^(LEFT l, RIGHT r) noexcept
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     using result_t=std::conditional_t<sizeof(LEFT)>=sizeof(RIGHT),LEFT,RIGHT>;
     return static_cast<result_t>(promote_keep_signedness(l)^promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto&
 operator^=(LEFT &l, RIGHT r) noexcept
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     static_assert(sizeof(LEFT) == sizeof(RIGHT),"xor by different sized integer type");
     l = static_cast<LEFT>(l^r);
     return l;
 }
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT>
+#else
+template<typename LEFT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+std::is_unsigned_v<ULT<LEFT>> >>
+#endif
 constexpr LEFT
 operator~(LEFT l) noexcept
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>>
+#endif
 {
     return static_cast<LEFT>(~promote_keep_signedness(l));
 }
 
 
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr LEFT
 operator<<(LEFT l, RIGHT r)
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssodin: trying to left-shift by too many bits");
     return static_cast<LEFT>(promote_keep_signedness(l)<<promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto&
 operator<<=(LEFT &l, RIGHT r)
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     l = (l<<r);
     return l;
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr LEFT
 operator>>(LEFT l, RIGHT r)
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     ps_assert( static_cast<size_t>(promote_keep_signedness(r)) < sizeof(LEFT)*CHAR_BIT , "pssodin: trying to right-shift by too many bits");
     return static_cast<LEFT>(promote_keep_signedness(l)>>promote_keep_signedness(r));
 }
+#ifdef __cpp_concepts
 template<an_overflowdetectingint LEFT, an_overflowdetectingint RIGHT>
+#else
+template<typename LEFT, typename RIGHT, typename=std::enable_if_t<
+detail_::is_overflowdetectingint_v<LEFT> &&
+detail_::is_overflowdetectingint_v<RIGHT> &&
+std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+>>
+#endif
 constexpr auto&
 operator>>=(LEFT &l, RIGHT r)
+#ifdef __cpp_concepts
 requires std::is_unsigned_v<ULT<LEFT>> && std::is_unsigned_v<ULT<RIGHT>>
+#endif
 {
     l = (l>>r);
     return l;
 }
 
-std::ostream& operator<<(std::ostream &out, an_overflowdetectingint auto value){
+#ifdef __cpp_concepts
+template<an_overflowdetectingint RIGHT>
+#else
+template<typename RIGHT, typename=std::enable_if_t<detail_::is_overflowdetectingint_v<RIGHT>>>
+#endif
+std::ostream& operator<<(std::ostream &out, RIGHT const value){
     out << promote_keep_signedness(value);
     return out;
 }
+#ifndef __cpp_concepts
+namespace detail_{
+template<typename type, typename=std::enable_if_t<is_overflowdetectingint_v<type>> >
+  struct numeric_limits
+  {
+    using ult = pssodin::ULT<type>;
+    static constexpr bool is_specialized = true;
 
+    static constexpr type
+    min() noexcept { return type{std::numeric_limits<ult>::min()}; }
+
+    static constexpr type
+    max() noexcept { return type{std::numeric_limits<ult>::max()}; }
+
+    static constexpr type
+    lowest() noexcept { return type{std::numeric_limits<ult>::lowest()}; }
+
+    static constexpr int digits = std::numeric_limits<ult>::digits;
+    static constexpr int digits10 = std::numeric_limits<ult>::digits10;
+    static constexpr int max_digits10 = std::numeric_limits<ult>::max_digits10;
+    static constexpr bool is_signed = std::numeric_limits<ult>::is_signed;
+    static constexpr bool is_integer = std::numeric_limits<ult>::is_integer;
+    static constexpr bool is_exact = std::numeric_limits<ult>::is_exact;
+    static constexpr int radix = std::numeric_limits<ult>::radix;
+
+    static constexpr type
+    epsilon() noexcept {  return type{std::numeric_limits<ult>::epsilon()}; }
+
+    static constexpr type
+    round_error() noexcept {  return type{std::numeric_limits<ult>::round_error()}; }
+
+    static constexpr int min_exponent = std::numeric_limits<ult>::min_exponent;
+    static constexpr int min_exponent10 = std::numeric_limits<ult>::min_exponent10;
+    static constexpr int max_exponent = std::numeric_limits<ult>::max_exponent;
+    static constexpr int max_exponent10 = std::numeric_limits<ult>::max_exponent10;
+
+    static constexpr bool has_infinity = std::numeric_limits<ult>::has_infinity;
+    static constexpr bool has_quiet_NaN = std::numeric_limits<ult>::has_quiet_NaN;
+    static constexpr bool has_signaling_NaN = std::numeric_limits<ult>::has_signaling_NaN;
+    static constexpr std::float_denorm_style has_denorm
+     = std::numeric_limits<ult>::has_denorm;
+    static constexpr bool has_denorm_loss = std::numeric_limits<ult>::has_denorm_loss;
+
+    static constexpr type
+    infinity() noexcept { return type{std::numeric_limits<ult>::infinity()}; }
+
+    static constexpr type
+    quiet_NaN() noexcept { return type{std::numeric_limits<ult>::quiet_NaN()}; }
+
+    static constexpr type
+    signaling_NaN() noexcept
+    { return type{std::numeric_limits<ult>::signaling_NaN()}; }
+
+    static constexpr type
+    denorm_min() noexcept
+    { return type{std::numeric_limits<ult>::denorm_min()}; }
+
+
+    static constexpr bool is_iec559 =  std::numeric_limits<ult>::is_iec559;
+    static constexpr bool is_bounded =  std::numeric_limits<ult>::is_bounded;
+    static constexpr bool is_modulo =  false;
+
+    static constexpr bool traps = false;
+    static constexpr bool tinyness_before =  std::numeric_limits<ult>::tinyness_before;
+    static constexpr std::float_round_style round_style =  std::numeric_limits<ult>::round_style;
+  };
+
+
+}
+#endif
 } // NS pssodin
 #undef ps_assert
 #undef PSSODIN_RAISE_SIGFPE
@@ -812,7 +1274,7 @@ std::ostream& operator<<(std::ostream &out, an_overflowdetectingint auto value){
 namespace std {
 
 
-
+#ifdef __cpp_concepts
 template<pssodin::an_overflowdetectingint type>
   struct numeric_limits<type>
   {
@@ -876,6 +1338,23 @@ template<pssodin::an_overflowdetectingint type>
     static constexpr bool tinyness_before =  numeric_limits<ult>::tinyness_before;
     static constexpr float_round_style round_style =  numeric_limits<ult>::round_style;
   };
-
+#else
+template<>
+struct numeric_limits<pssodin::csi8>: pssodin::detail_::numeric_limits<pssodin::csi8>{};
+template<>
+struct numeric_limits<pssodin::csi16>: pssodin::detail_::numeric_limits<pssodin::csi16>{};
+template<>
+struct numeric_limits<pssodin::csi32>: pssodin::detail_::numeric_limits<pssodin::csi32>{};
+template<>
+struct numeric_limits<pssodin::csi64>: pssodin::detail_::numeric_limits<pssodin::csi64>{};
+template<>
+struct numeric_limits<pssodin::cui8>: pssodin::detail_::numeric_limits<pssodin::cui8>{};
+template<>
+struct numeric_limits<pssodin::cui16>: pssodin::detail_::numeric_limits<pssodin::cui16>{};
+template<>
+struct numeric_limits<pssodin::cui32>: pssodin::detail_::numeric_limits<pssodin::cui32>{};
+template<>
+struct numeric_limits<pssodin::cui64>: pssodin::detail_::numeric_limits<pssodin::cui64>{};
+#endif
 }
 #endif /* SRC_PSSODIN_ */

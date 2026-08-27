@@ -428,7 +428,6 @@ void ui8OutputAsInteger(){
 
 void checkedFromInt(){
     ASSERT_THROWS(std::ignore = from_int_to<cui8>(2400u), char const *);
-
 }
 
 

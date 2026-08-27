@@ -940,7 +940,7 @@ check_does_compile(    ,  cui64, +  1_cui64 - 1_cui8  +) // same signedness
 
 template<typename T, typename WHAT>
 constexpr bool
-isa = std::is_same_v<std::remove_cvref_t<T>,WHAT>;
+isa = std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>,WHAT>;
 
 
 template<typename T>
