@@ -200,10 +200,14 @@ is_compatible_integer_v = std::is_same_v<TESTED,INT> ||
    && (std::is_unsigned_v<INT> == std::is_unsigned_v<TESTED>)
    && std::numeric_limits<TESTED>::max() == std::numeric_limits<INT>::max() );
 
+template<typename TESTED,typename=void>
+constexpr bool
+is_known_integer_v =false;
 
 template<typename TESTED>
 constexpr bool
-is_known_integer_v =    is_compatible_integer_v<std::uint8_t,  TESTED>
+is_known_integer_v<TESTED,std::enable_if_t<std::is_integral_v<TESTED>>> =
+                        is_compatible_integer_v<std::uint8_t,  TESTED>
                      || is_compatible_integer_v<std::uint16_t, TESTED>
                      || is_compatible_integer_v<std::uint32_t, TESTED>
                      || is_compatible_integer_v<std::uint64_t, TESTED>
@@ -602,13 +606,13 @@ requires same_signedness<LEFT,RIGHT>
      }
     return static_cast<result_t>(result);
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
 constexpr auto
 operator*(LEFT l, RIGHT r)
 {
     return l * from_int_to<LEFT>(r);
 }
-template<std::integral LEFT, an_overflowdetectingint RIGHT>
+template<sized_integer LEFT, an_overflowdetectingint RIGHT>
 constexpr auto
 operator*(LEFT l, RIGHT r)
 {
@@ -624,7 +628,7 @@ requires same_signedness<LEFT,RIGHT>
     l = static_cast<LEFT>(l*r);
     return l;
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
 constexpr auto&
 operator*=(LEFT &l, RIGHT r)
 {
@@ -652,7 +656,7 @@ requires same_signedness<LEFT,RIGHT>
     );
 
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
 constexpr auto
 operator/(LEFT const l, RIGHT const r)
 {
@@ -668,7 +672,7 @@ requires same_signedness<LEFT,RIGHT>
     l = static_cast<LEFT>(l/r);
     return l;
 }
-template<an_overflowdetectingint LEFT, std::integral RIGHT>
+template<an_overflowdetectingint LEFT, sized_integer RIGHT>
 constexpr auto&
 operator/=(LEFT &l, RIGHT r)
 {

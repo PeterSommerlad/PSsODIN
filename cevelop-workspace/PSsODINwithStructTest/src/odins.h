@@ -52,10 +52,14 @@ is_compatible_integer_v = std::is_same_v<TESTED,INT> ||
    && (std::is_unsigned_v<INT> == std::is_unsigned_v<TESTED>)
    && std::numeric_limits<TESTED>::max() == std::numeric_limits<INT>::max() );
 
+template<typename TESTED,typename=void>
+constexpr bool
+is_known_integer_v =false;
 // only support the following sizes:
 template<typename TESTED>
 constexpr bool
-is_known_integer_v =    is_compatible_integer_v<std::uint8_t,  TESTED>
+is_known_integer_v<TESTED,std::enable_if_t<std::is_integral_v<TESTED>>> =
+                        is_compatible_integer_v<std::uint8_t,  TESTED>
                      || is_compatible_integer_v<std::uint16_t, TESTED>
                      || is_compatible_integer_v<std::uint32_t, TESTED>
                      || is_compatible_integer_v<std::uint64_t, TESTED>
@@ -376,7 +380,7 @@ struct [[nodiscard]] Odin{
     explicit constexpr operator INT() const noexcept {
         return value_which_should_not_be_referred_to_from_user_code;
     }
-    template<std::integral FROM>
+    template<sized_integer FROM>
     explicit constexpr Odin(FROM v)
     requires (not std::same_as<INT,detail_::plain<FROM>>)
     :value_which_should_not_be_referred_to_from_user_code{
@@ -490,13 +494,13 @@ struct [[nodiscard]] Odin{
         }
         return static_cast<result_t>(result);
     }
-    template<std::integral RIGHT>
+    template<sized_integer RIGHT>
     friend constexpr auto
     operator*(Odin l, RIGHT r)
     {
         return l * from_int_to<Odin>(r);
     }
-    template<std::integral LEFT>
+    template<sized_integer LEFT>
     friend constexpr auto
     operator*(LEFT l, Odin r)
     {
@@ -512,7 +516,7 @@ struct [[nodiscard]] Odin{
         *this = static_cast<Odin>(*this*r);
         return *this;
     }
-    template<std::integral RIGHT>
+    template<sized_integer RIGHT>
     constexpr auto&
     operator*=(RIGHT r) &
     {
@@ -535,7 +539,7 @@ struct [[nodiscard]] Odin{
         }
         return static_cast<result_t>(numerator/denominator);
     }
-    template<std::integral RIGHT>
+    template<sized_integer RIGHT>
     friend constexpr auto
     operator/(Odin const l, RIGHT const r)
     {
@@ -551,7 +555,7 @@ struct [[nodiscard]] Odin{
         *this = static_cast<Odin>(*this/r);
         return *this;
     }
-    template<std::integral RIGHT>
+    template<sized_integer RIGHT>
     constexpr auto&
     operator/=(RIGHT r) &
     {
