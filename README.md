@@ -10,6 +10,7 @@
 ## Introduction
 
 A C++20 implementation of safe overflow detecting integers following MISRA C++ rules.
+New: scalar multiplication with regular integers is supported now for easier use with units libraries such as `mp_units`.
 
 An `#ifdef`ed C++17 implementation is available in branch std17.
 
