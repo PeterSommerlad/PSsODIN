@@ -159,7 +159,7 @@ using plain = std::remove_cv_t<std::remove_reference_t<T>>;
 template<typename T>
 constexpr bool an_enum = std::is_enum_v<plain<T>>;
 // from C++23
-template<typename T, typename = std::enable_if_t<an_enum<T>,void>>
+template<typename T, typename = std::enable_if_t<an_enum<T>>>
 constexpr bool
 is_scoped_enum_v = !std::is_convertible_v<T, std::underlying_type_t<T>>;
 

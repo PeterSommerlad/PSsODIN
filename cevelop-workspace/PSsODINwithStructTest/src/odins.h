@@ -1018,7 +1018,7 @@ struct [[nodiscard]] Odin{
 [[nodiscard]]
 constexpr auto to_underlying(an_overflowdetectingint auto v)
 #else
-template<typename T, typename=std::enable_if_t<detail_::is_overflowdetectingint_v<T>,void>>
+template<typename T, typename=std::enable_if_t<detail_::is_overflowdetectingint_v<T>>>
 [[nodiscard]]
 constexpr auto to_underlying(T v)
 #endif
@@ -1119,7 +1119,7 @@ csi64 operator""_csi64(unsigned long long value_which_should_not_be_referred_to_
 
 #ifndef __cpp_concepts
 namespace detail_{
-template<typename type, typename=std::enable_if_t<is_overflowdetectingint_v<type>,void> >
+template<typename type, typename=std::enable_if_t<is_overflowdetectingint_v<type>> >
   struct numeric_limits
   {
     using ult = ULT<type>;
