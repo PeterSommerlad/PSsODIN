@@ -68,7 +68,8 @@ is_known_integer_v=false;
 // only support the following sizes:
 template<typename TESTED>
 constexpr bool
-is_known_integer_v<TESTED,std::enable_if_t<std::is_integral_v<TESTED>>> =    is_compatible_integer_v<std::uint8_t,  TESTED>
+is_known_integer_v<TESTED,std::enable_if_t<std::is_integral_v<TESTED>>> =
+                        is_compatible_integer_v<std::uint8_t,  TESTED>
                      || is_compatible_integer_v<std::uint16_t, TESTED>
                      || is_compatible_integer_v<std::uint32_t, TESTED>
                      || is_compatible_integer_v<std::uint64_t, TESTED>
@@ -766,7 +767,7 @@ struct [[nodiscard]] Odin{
         return *this;
     }
 #ifdef __cpp_concepts
-    template<std::integral RIGHT>
+    template<sized_integer RIGHT>
     constexpr auto&
 #else
     template<typename RIGHT>
