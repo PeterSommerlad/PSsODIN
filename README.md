@@ -10,8 +10,9 @@
 ## Introduction
 
 A C++20 implementation of safe overflow detecting integers following MISRA C++ rules.
+New: provide scalar multiplication and division by regular integers to support units libraries with scaling, such as `mp_units`.
 
-<!-- An `#ifdef`ed C++17 implementation is available in branch C++17. -->
+An `#ifdef`ed C++17 implementation is available in branch std17.
 
 I provide two implementations of saturating integer arithmetic for signed and unsigned integers of sizes 8, 16, 32, 64 bits. 
 
